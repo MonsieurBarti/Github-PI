@@ -102,11 +102,13 @@ pi config  # enable/disable individual extensions, skills, prompts, themes
 
 The LLM can call any of the four GitHub tools directly. Each tool takes an `action` plus the parameters that action needs.
 
-### `github_repo`
+> All four tool ids are namespaced with the `tff-` prefix (`tff-github_repo`, `tff-github_issue`, `tff-github_pr`, `tff-github_workflow`) to avoid collisions with other pi packages. The user-facing display labels ("GitHub Repository", "GitHub Issue", etc.) stay readable — only the LLM-facing ids are prefixed.
+
+### `tff-github_repo`
 
 ```typescript
 // Create a repository
-github_repo({
+tff-github_repo({
   action: "create",
   name: "my-new-project",
   visibility: "public",
@@ -114,17 +116,17 @@ github_repo({
 });
 
 // List your repos (or those of an org)
-github_repo({ action: "list", owner: "the-forge-flow", limit: 20 });
+tff-github_repo({ action: "list", owner: "the-forge-flow", limit: 20 });
 
 // View details
-github_repo({ action: "view", owner: "octocat", name: "hello-world" });
+tff-github_repo({ action: "view", owner: "octocat", name: "hello-world" });
 ```
 
-### `github_issue`
+### `tff-github_issue`
 
 ```typescript
 // Open an issue
-github_issue({
+tff-github_issue({
   action: "create",
   repo: "owner/repo",
   title: "Flaky integration test",
@@ -133,7 +135,7 @@ github_issue({
 });
 
 // List open issues assigned to you
-github_issue({
+tff-github_issue({
   action: "list",
   repo: "owner/repo",
   state: "open",
@@ -141,7 +143,7 @@ github_issue({
 });
 
 // Close with a reason
-github_issue({
+tff-github_issue({
   action: "close",
   repo: "owner/repo",
   number: 42,
@@ -149,11 +151,11 @@ github_issue({
 });
 ```
 
-### `github_pr`
+### `tff-github_pr`
 
 ```typescript
 // Open a PR
-github_pr({
+tff-github_pr({
   action: "create",
   repo: "owner/repo",
   title: "Add rate-limit backoff",
@@ -162,7 +164,7 @@ github_pr({
 });
 
 // Review a PR (request-changes and comment REQUIRE a body)
-github_pr({
+tff-github_pr({
   action: "review",
   repo: "owner/repo",
   number: 17,
@@ -171,7 +173,7 @@ github_pr({
 });
 
 // Merge with squash and delete the source branch
-github_pr({
+tff-github_pr({
   action: "merge",
   repo: "owner/repo",
   number: 17,
@@ -180,14 +182,14 @@ github_pr({
 });
 ```
 
-### `github_workflow`
+### `tff-github_workflow`
 
 ```typescript
 // List workflows
-github_workflow({ action: "list", repo: "owner/repo" });
+tff-github_workflow({ action: "list", repo: "owner/repo" });
 
 // Trigger a workflow_dispatch with inputs
-github_workflow({
+tff-github_workflow({
   action: "run",
   repo: "owner/repo",
   workflow: "deploy.yml",
@@ -196,7 +198,7 @@ github_workflow({
 });
 
 // Read the log for a specific run
-github_workflow({
+tff-github_workflow({
   action: "logs",
   repo: "owner/repo",
   run_id: "1234567890",

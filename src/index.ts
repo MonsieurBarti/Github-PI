@@ -128,11 +128,15 @@ export default function ghExtension(pi: ExtensionAPI): void {
 	}
 
 	// ---------------------------------------------------------------------
-	// github_repo
+	// tff-github_repo
 	// ---------------------------------------------------------------------
 	pi.registerTool(
 		defineTool({
-			name: "github_repo",
+			// Namespaced with tff- prefix so it can coexist with other pi
+			// packages that might ship a similarly-named tool. The LLM-facing
+			// id is the only thing that changes; the display label stays
+			// readable.
+			name: "tff-github_repo",
 			label: "GitHub Repository",
 			description: "Manage GitHub repositories: create, clone, fork, list, view, delete, sync.",
 			promptSnippet: "Work with GitHub repositories",
@@ -264,11 +268,11 @@ export default function ghExtension(pi: ExtensionAPI): void {
 	);
 
 	// ---------------------------------------------------------------------
-	// github_issue
+	// tff-github_issue
 	// ---------------------------------------------------------------------
 	pi.registerTool(
 		defineTool({
-			name: "github_issue",
+			name: "tff-github_issue",
 			label: "GitHub Issue",
 			description: "Manage GitHub issues: create, list, view, close, reopen, comment, edit.",
 			promptSnippet: "Work with GitHub issues",
@@ -410,11 +414,11 @@ export default function ghExtension(pi: ExtensionAPI): void {
 	);
 
 	// ---------------------------------------------------------------------
-	// github_pr
+	// tff-github_pr
 	// ---------------------------------------------------------------------
 	pi.registerTool(
 		defineTool({
-			name: "github_pr",
+			name: "tff-github_pr",
 			label: "GitHub Pull Request",
 			description:
 				"Manage GitHub pull requests: create, list, view, diff, merge, review, close, checkout.",
@@ -567,11 +571,11 @@ export default function ghExtension(pi: ExtensionAPI): void {
 	);
 
 	// ---------------------------------------------------------------------
-	// github_workflow
+	// tff-github_workflow
 	// ---------------------------------------------------------------------
 	pi.registerTool(
 		defineTool({
-			name: "github_workflow",
+			name: "tff-github_workflow",
 			label: "GitHub Workflow",
 			description: "Manage GitHub Actions workflows: list, view, run, logs, disable, enable.",
 			promptSnippet: "Work with GitHub Actions workflows",

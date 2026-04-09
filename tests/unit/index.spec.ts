@@ -61,10 +61,10 @@ describe("gh-extension", () => {
 
 	it("registers all github_* tools", () => {
 		ghExtension(mockPi);
-		expect(registeredTools.has("github_repo")).toBe(true);
-		expect(registeredTools.has("github_issue")).toBe(true);
-		expect(registeredTools.has("github_pr")).toBe(true);
-		expect(registeredTools.has("github_workflow")).toBe(true);
+		expect(registeredTools.has("tff-github_repo")).toBe(true);
+		expect(registeredTools.has("tff-github_issue")).toBe(true);
+		expect(registeredTools.has("tff-github_pr")).toBe(true);
+		expect(registeredTools.has("tff-github_workflow")).toBe(true);
 	});
 
 	it("registers session_start and session_shutdown handlers", () => {
@@ -76,9 +76,9 @@ describe("gh-extension", () => {
 	describe("github_repo tool", () => {
 		it("exposes the expected actions", () => {
 			ghExtension(mockPi);
-			const tool = registeredTools.get("github_repo");
+			const tool = registeredTools.get("tff-github_repo");
 			expect(tool).toBeDefined();
-			expect(tool?.name).toBe("github_repo");
+			expect(tool?.name).toBe("tff-github_repo");
 			expect(tool?.label).toBe("GitHub Repository");
 			for (const action of ["create", "list", "clone", "fork", "view", "delete", "sync"]) {
 				expect(tool?.parameters.properties.action.enum).toContain(action);
@@ -87,7 +87,7 @@ describe("gh-extension", () => {
 
 		it("has prompt guidelines", () => {
 			ghExtension(mockPi);
-			const tool = registeredTools.get("github_repo");
+			const tool = registeredTools.get("tff-github_repo");
 			expect(tool?.promptGuidelines?.length).toBeGreaterThan(0);
 		});
 	});
@@ -95,8 +95,8 @@ describe("gh-extension", () => {
 	describe("github_issue tool", () => {
 		it("has correct actions", () => {
 			ghExtension(mockPi);
-			const tool = registeredTools.get("github_issue");
-			expect(tool?.name).toBe("github_issue");
+			const tool = registeredTools.get("tff-github_issue");
+			expect(tool?.name).toBe("tff-github_issue");
 			for (const action of ["create", "list", "view", "close", "reopen", "comment", "edit"]) {
 				expect(tool?.parameters.properties.action.enum).toContain(action);
 			}
@@ -106,8 +106,8 @@ describe("gh-extension", () => {
 	describe("github_pr tool", () => {
 		it("has correct actions", () => {
 			ghExtension(mockPi);
-			const tool = registeredTools.get("github_pr");
-			expect(tool?.name).toBe("github_pr");
+			const tool = registeredTools.get("tff-github_pr");
+			expect(tool?.name).toBe("tff-github_pr");
 			for (const action of [
 				"create",
 				"list",
@@ -126,8 +126,8 @@ describe("gh-extension", () => {
 	describe("github_workflow tool", () => {
 		it("has correct actions", () => {
 			ghExtension(mockPi);
-			const tool = registeredTools.get("github_workflow");
-			expect(tool?.name).toBe("github_workflow");
+			const tool = registeredTools.get("tff-github_workflow");
+			expect(tool?.name).toBe("tff-github_workflow");
 			for (const action of ["list", "view", "run", "logs", "disable", "enable"]) {
 				expect(tool?.parameters.properties.action.enum).toContain(action);
 			}
@@ -208,7 +208,7 @@ describe("gh-extension", () => {
 			const sessionStart = eventHandlers.get("session_start") as SessionStartHandler;
 			await sessionStart({}, { hasUI: false, ui: { notify: vi.fn() } });
 
-			const tool = registeredTools.get("github_repo");
+			const tool = registeredTools.get("tff-github_repo");
 			if (!tool) throw new Error("github_repo tool not registered");
 
 			await expect(
@@ -228,7 +228,7 @@ describe("gh-extension", () => {
 			const sessionStart = eventHandlers.get("session_start") as SessionStartHandler;
 			await sessionStart({}, { hasUI: false, ui: { notify: vi.fn() } });
 
-			const tool = registeredTools.get("github_repo");
+			const tool = registeredTools.get("tff-github_repo");
 			if (!tool) throw new Error("github_repo tool not registered");
 			const controller = new AbortController();
 			await tool.execute("call-2", { action: "list" }, controller.signal, undefined, {});
@@ -248,7 +248,7 @@ describe("gh-extension", () => {
 			const sessionStart = eventHandlers.get("session_start") as SessionStartHandler;
 			await sessionStart({}, { hasUI: false, ui: { notify: vi.fn() } });
 
-			const tool = registeredTools.get("github_pr");
+			const tool = registeredTools.get("tff-github_pr");
 			if (!tool) throw new Error("github_pr tool not registered");
 			await expect(
 				tool.execute(
@@ -278,7 +278,7 @@ describe("gh-extension", () => {
 			const sessionStart = eventHandlers.get("session_start") as SessionStartHandler;
 			await sessionStart({}, { hasUI: false, ui: { notify: vi.fn() } });
 
-			const tool = registeredTools.get("github_pr");
+			const tool = registeredTools.get("tff-github_pr");
 			if (!tool) throw new Error("github_pr tool not registered");
 			const result = await tool.execute(
 				"call-4",
@@ -304,7 +304,7 @@ describe("gh-extension", () => {
 			const sessionStart = eventHandlers.get("session_start") as SessionStartHandler;
 			await sessionStart({}, { hasUI: false, ui: { notify: vi.fn() } });
 
-			const tool = registeredTools.get("github_repo");
+			const tool = registeredTools.get("tff-github_repo");
 			if (!tool) throw new Error("github_repo tool not registered");
 
 			await expect(
@@ -329,7 +329,7 @@ describe("gh-extension", () => {
 			const sessionStart = eventHandlers.get("session_start") as SessionStartHandler;
 			await sessionStart({}, { hasUI: false, ui: { notify: vi.fn() } });
 
-			const tool = registeredTools.get("github_repo");
+			const tool = registeredTools.get("tff-github_repo");
 			if (!tool) throw new Error("github_repo tool not registered");
 			const result = await tool.execute("call-b", { action: "list" }, undefined, undefined, {});
 
@@ -352,7 +352,7 @@ describe("gh-extension", () => {
 			const sessionStart = eventHandlers.get("session_start") as SessionStartHandler;
 			await sessionStart({}, { hasUI: false, ui: { notify: vi.fn() } });
 
-			const tool = registeredTools.get("github_repo");
+			const tool = registeredTools.get("tff-github_repo");
 			if (!tool) throw new Error("github_repo tool not registered");
 
 			await expect(
@@ -377,7 +377,7 @@ describe("gh-extension", () => {
 			const sessionStart = eventHandlers.get("session_start") as SessionStartHandler;
 			await sessionStart({}, { hasUI: false, ui: { notify: vi.fn() } });
 
-			const tool = registeredTools.get("github_repo");
+			const tool = registeredTools.get("tff-github_repo");
 			if (!tool) throw new Error("github_repo tool not registered");
 
 			await expect(
@@ -396,7 +396,7 @@ describe("gh-extension", () => {
 			const sessionStart = eventHandlers.get("session_start") as SessionStartHandler;
 			await sessionStart({}, { hasUI: false, ui: { notify: vi.fn() } });
 
-			const tool = registeredTools.get("github_repo");
+			const tool = registeredTools.get("tff-github_repo");
 			if (!tool) throw new Error("github_repo tool not registered");
 
 			// Two back-to-back calls
@@ -425,7 +425,7 @@ describe("gh-extension", () => {
 			const sessionStart = eventHandlers.get("session_start") as SessionStartHandler;
 			await sessionStart({}, { hasUI: false, ui: { notify: vi.fn() } });
 
-			const tool = registeredTools.get("github_repo");
+			const tool = registeredTools.get("tff-github_repo");
 			if (!tool) throw new Error("github_repo tool not registered");
 			await tool.execute("call-f1", { action: "list" }, undefined, undefined, {});
 
@@ -453,7 +453,7 @@ describe("gh-extension", () => {
 			const sessionStart = eventHandlers.get("session_start") as SessionStartHandler;
 			await sessionStart({}, { hasUI: false, ui: { notify: vi.fn() } });
 
-			const tool = registeredTools.get("github_pr");
+			const tool = registeredTools.get("tff-github_pr");
 			if (!tool) throw new Error("github_pr tool not registered");
 			await tool.execute(
 				"call-pr-list",
@@ -498,7 +498,7 @@ describe("gh-extension", () => {
 			const sessionStart = eventHandlers.get("session_start") as SessionStartHandler;
 			await sessionStart({}, { hasUI: false, ui: { notify: vi.fn() } });
 
-			const tool = registeredTools.get("github_issue");
+			const tool = registeredTools.get("tff-github_issue");
 			if (!tool) throw new Error("github_issue tool not registered");
 			await tool.execute(
 				"call-issue-create",
@@ -542,7 +542,7 @@ describe("gh-extension", () => {
 				const sessionStart = eventHandlers.get("session_start") as SessionStartHandler;
 				await sessionStart({}, { hasUI: false, ui: { notify: vi.fn() } });
 
-				const tool = registeredTools.get("github_repo");
+				const tool = registeredTools.get("tff-github_repo");
 				if (!tool) throw new Error("github_repo tool not registered");
 				await tool.execute("call-g", { action: "list" }, undefined, undefined, {});
 
