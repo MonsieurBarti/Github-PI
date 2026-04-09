@@ -1,21 +1,21 @@
 <div align="center">
-  <img src="https://raw.githubusercontent.com/MonsieurBarti/The-Forge-Flow-CC/refs/heads/main/assets/forge-banner.png" alt="The Forge Flow - GitHub CLI Extension" width="100%">
+  <img src="https://raw.githubusercontent.com/MonsieurBarti/The-Forge-Flow-CC/refs/heads/main/assets/forge-banner.png" alt="The Forge Flow - GH-PI" width="100%">
 
-  <h1>🔧 GitHub CLI Extension</h1>
+  <h1>🔧 GH-PI</h1>
 
   <p>
     <strong>Native GitHub CLI (<code>gh</code>) integration for PI</strong>
   </p>
 
   <p>
-    <a href="https://github.com/MonsieurBarti/Github-PI/actions/workflows/ci.yml">
-      <img src="https://img.shields.io/github/actions/workflow/status/MonsieurBarti/Github-PI/ci.yml?label=CI&style=flat-square" alt="CI Status">
+    <a href="https://github.com/MonsieurBarti/GH-PI/actions/workflows/ci.yml">
+      <img src="https://img.shields.io/github/actions/workflow/status/MonsieurBarti/GH-PI/ci.yml?label=CI&style=flat-square" alt="CI Status">
     </a>
     <a href="https://www.npmjs.com/package/@the-forge-flow/gh-pi">
       <img src="https://img.shields.io/npm/v/@the-forge-flow/gh-pi?style=flat-square" alt="npm version">
     </a>
     <a href="LICENSE">
-      <img src="https://img.shields.io/github/license/MonsieurBarti/Github-PI?style=flat-square" alt="License">
+      <img src="https://img.shields.io/github/license/MonsieurBarti/GH-PI?style=flat-square" alt="License">
     </a>
   </p>
 </div>
@@ -72,7 +72,7 @@ pi install npm:@the-forge-flow/gh-pi
 **From GitHub (tracks `main`):**
 
 ```bash
-pi install git:github.com/MonsieurBarti/Github-PI
+pi install git:github.com/MonsieurBarti/GH-PI
 ```
 
 **Pin to a specific version:**
@@ -82,7 +82,7 @@ pi install git:github.com/MonsieurBarti/Github-PI
 pi install npm:@the-forge-flow/gh-pi@0.1.0
 
 # git — pin to a release tag
-pi install git:github.com/MonsieurBarti/Github-PI@gh-pi-v0.1.0
+pi install git:github.com/MonsieurBarti/GH-PI@gh-pi-v0.1.0
 ```
 
 Then reload PI with `/reload` (or restart it). On the next session you should see a notification that the `GitHub CLI` is ready.
