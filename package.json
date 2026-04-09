@@ -1,7 +1,7 @@
 {
 	"name": "@the-forge-flow/gh-pi",
 	"version": "0.1.0",
-	"description": "PI extension for GitHub CLI integration",
+	"description": "GH-PI — PI extension for native GitHub CLI (gh) integration",
 	"type": "module",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
@@ -17,7 +17,8 @@
 		"format:fix": "biome format . --write",
 		"check": "biome check .",
 		"check:fix": "biome check . --write",
-		"typecheck": "tsc --noEmit"
+		"typecheck": "tsc --noEmit",
+		"prepare": "lefthook install || true"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^1.9.4",
@@ -42,12 +43,12 @@
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/monsieurbarti/gh-pi.git"
+		"url": "git+https://github.com/MonsieurBarti/GH-PI.git"
 	},
 	"bugs": {
-		"url": "https://github.com/monsieurbarti/gh-pi/issues"
+		"url": "https://github.com/MonsieurBarti/GH-PI/issues"
 	},
-	"homepage": "https://github.com/monsieurbarti/gh-pi#readme",
+	"homepage": "https://github.com/MonsieurBarti/GH-PI#readme",
 	"publishConfig": {
 		"access": "public"
 	},

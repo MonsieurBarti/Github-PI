@@ -12,9 +12,13 @@ describe("pr-tools", () => {
 	});
 
 	describe("create", () => {
-		it("creates PR from head to base", async () => {
+		it("creates PR from head to base without --json", async () => {
 			const tools = createPRTools(mockClient);
-			mockExec.mockResolvedValue({ code: 0, stdout: '{"number": 5}', data: { number: 5 } });
+			mockExec.mockResolvedValue({
+				code: 0,
+				stdout: "https://github.com/owner/repo/pull/5",
+				stderr: "",
+			});
 
 			await tools.create({
 				repo: "owner/repo",
@@ -25,27 +29,28 @@ describe("pr-tools", () => {
 				draft: false,
 			});
 
-			expect(mockExec).toHaveBeenCalledWith([
-				"pr",
-				"create",
-				"--repo",
-				"owner/repo",
-				"--title",
-				"Add feature",
-				"--head",
-				"feature-branch",
-				"--base",
-				"main",
-				"--body",
-				"This PR adds...",
-				"--json",
-				"number,title,url,state,headRefName,baseRefName,createdAt",
-			]);
+			expect(mockExec).toHaveBeenCalledWith(
+				[
+					"pr",
+					"create",
+					"--repo",
+					"owner/repo",
+					"--title",
+					"Add feature",
+					"--head",
+					"feature-branch",
+					"--base",
+					"main",
+					"--body",
+					"This PR adds...",
+				],
+				undefined,
+			);
 		});
 
 		it("creates draft PR", async () => {
 			const tools = createPRTools(mockClient);
-			mockExec.mockResolvedValue({ code: 0, stdout: "{}", data: {} });
+			mockExec.mockResolvedValue({ code: 0, stdout: "", stderr: "" });
 
 			await tools.create({
 				repo: "owner/repo",
@@ -55,38 +60,37 @@ describe("pr-tools", () => {
 				draft: true,
 			});
 
-			expect(mockExec).toHaveBeenCalledWith(expect.arrayContaining(["--draft"]));
+			expect(mockExec).toHaveBeenCalledWith(expect.arrayContaining(["--draft"]), undefined);
 		});
 	});
 
 	describe("list", () => {
 		it("lists open PRs", async () => {
 			const tools = createPRTools(mockClient);
-			mockExec.mockResolvedValue({ code: 0, stdout: "[]", data: [] });
+			mockExec.mockResolvedValue({ code: 0, stdout: "[]", stderr: "", data: [] });
 
-			await tools.list({
-				repo: "owner/repo",
-				state: "open",
-				limit: 20,
-			});
+			await tools.list({ repo: "owner/repo", state: "open", limit: 20 });
 
-			expect(mockExec).toHaveBeenCalledWith([
-				"pr",
-				"list",
-				"--repo",
-				"owner/repo",
-				"--state",
-				"open",
-				"--limit",
-				"20",
-				"--json",
-				"number,title,state,author,headRefName,baseRefName,updatedAt,createdAt",
-			]);
+			expect(mockExec).toHaveBeenCalledWith(
+				[
+					"pr",
+					"list",
+					"--repo",
+					"owner/repo",
+					"--state",
+					"open",
+					"--limit",
+					"20",
+					"--json",
+					"number,title,state,author,headRefName,baseRefName,updatedAt,createdAt",
+				],
+				undefined,
+			);
 		});
 
 		it("filters by head and base", async () => {
 			const tools = createPRTools(mockClient);
-			mockExec.mockResolvedValue({ code: 0, stdout: "[]", data: [] });
+			mockExec.mockResolvedValue({ code: 0, stdout: "[]", stderr: "", data: [] });
 
 			await tools.list({
 				repo: "owner/repo",
@@ -95,42 +99,45 @@ describe("pr-tools", () => {
 				author: "octocat",
 			});
 
-			expect(mockExec).toHaveBeenCalledWith([
-				"pr",
-				"list",
-				"--repo",
-				"owner/repo",
-				"--head",
-				"feature",
-				"--base",
-				"develop",
-				"--author",
-				"octocat",
-				"--json",
-				"number,title,state,author,headRefName,baseRefName,updatedAt,createdAt",
-			]);
+			expect(mockExec).toHaveBeenCalledWith(
+				[
+					"pr",
+					"list",
+					"--repo",
+					"owner/repo",
+					"--head",
+					"feature",
+					"--base",
+					"develop",
+					"--author",
+					"octocat",
+					"--json",
+					"number,title,state,author,headRefName,baseRefName,updatedAt,createdAt",
+				],
+				undefined,
+			);
 		});
 	});
 
 	describe("view", () => {
-		it("views PR by number", async () => {
+		it("views PR by number using statusCheckRollup field", async () => {
 			const tools = createPRTools(mockClient);
-			mockExec.mockResolvedValue({ code: 0, stdout: "{}", data: {} });
+			mockExec.mockResolvedValue({ code: 0, stdout: "{}", stderr: "", data: {} });
 
-			await tools.view({
-				repo: "owner/repo",
-				number: 5,
-			});
+			await tools.view({ repo: "owner/repo", number: 5 });
 
-			expect(mockExec).toHaveBeenCalledWith([
-				"pr",
-				"view",
-				"5",
-				"--repo",
-				"owner/repo",
-				"--json",
-				"number,title,body,state,author,headRefName,baseRefName,additions,deletions,files,merged,mergeable,checksState",
-			]);
+			expect(mockExec).toHaveBeenCalledWith(
+				[
+					"pr",
+					"view",
+					"5",
+					"--repo",
+					"owner/repo",
+					"--json",
+					"number,title,body,state,author,headRefName,baseRefName,additions,deletions,files,merged,mergeable,statusCheckRollup",
+				],
+				undefined,
+			);
 		});
 	});
 
@@ -139,12 +146,9 @@ describe("pr-tools", () => {
 			const tools = createPRTools(mockClient);
 			mockExec.mockResolvedValue({ code: 0, stdout: "diff content", stderr: "" });
 
-			const result = await tools.diff({
-				repo: "owner/repo",
-				number: 5,
-			});
+			const result = await tools.diff({ repo: "owner/repo", number: 5 });
 
-			expect(mockExec).toHaveBeenCalledWith(["pr", "diff", "5", "--repo", "owner/repo"]);
+			expect(mockExec).toHaveBeenCalledWith(["pr", "diff", "5", "--repo", "owner/repo"], undefined);
 			expect(result.stdout).toBe("diff content");
 		});
 	});
@@ -161,15 +165,10 @@ describe("pr-tools", () => {
 				delete_branch: true,
 			});
 
-			expect(mockExec).toHaveBeenCalledWith([
-				"pr",
-				"merge",
-				"5",
-				"--repo",
-				"owner/repo",
-				"--squash",
-				"--delete-branch",
-			]);
+			expect(mockExec).toHaveBeenCalledWith(
+				["pr", "merge", "5", "--repo", "owner/repo", "--squash", "--delete-branch"],
+				undefined,
+			);
 		});
 
 		it("auto merges with rebase", async () => {
@@ -183,15 +182,10 @@ describe("pr-tools", () => {
 				auto: true,
 			});
 
-			expect(mockExec).toHaveBeenCalledWith([
-				"pr",
-				"merge",
-				"5",
-				"--repo",
-				"owner/repo",
-				"--rebase",
-				"--auto",
-			]);
+			expect(mockExec).toHaveBeenCalledWith(
+				["pr", "merge", "5", "--repo", "owner/repo", "--rebase", "--auto"],
+				undefined,
+			);
 		});
 	});
 
@@ -207,16 +201,22 @@ describe("pr-tools", () => {
 				body: "LGTM!",
 			});
 
-			expect(mockExec).toHaveBeenCalledWith([
-				"pr",
-				"review",
-				"5",
-				"--repo",
-				"owner/repo",
-				"--approve",
-				"--body",
-				"LGTM!",
-			]);
+			expect(mockExec).toHaveBeenCalledWith(
+				["pr", "review", "5", "--repo", "owner/repo", "--approve", "--body", "LGTM!"],
+				undefined,
+			);
+		});
+
+		it("approves without a body", async () => {
+			const tools = createPRTools(mockClient);
+			mockExec.mockResolvedValue({ code: 0, stdout: "", stderr: "" });
+
+			await tools.review({ repo: "owner/repo", number: 5, action: "approve" });
+
+			expect(mockExec).toHaveBeenCalledWith(
+				["pr", "review", "5", "--repo", "owner/repo", "--approve"],
+				undefined,
+			);
 		});
 
 		it("requests changes", async () => {
@@ -230,19 +230,41 @@ describe("pr-tools", () => {
 				body: "Needs fixes",
 			});
 
-			expect(mockExec).toHaveBeenCalledWith([
-				"pr",
-				"review",
-				"5",
-				"--repo",
-				"owner/repo",
-				"--request-changes",
-				"--body",
-				"Needs fixes",
-			]);
+			expect(mockExec).toHaveBeenCalledWith(
+				["pr", "review", "5", "--repo", "owner/repo", "--request-changes", "--body", "Needs fixes"],
+				undefined,
+			);
 		});
 
-		it("comments without approval", async () => {
+		it("throws when request-changes is called without a body", async () => {
+			const tools = createPRTools(mockClient);
+
+			await expect(
+				tools.review({
+					repo: "owner/repo",
+					number: 5,
+					action: "request-changes",
+				}),
+			).rejects.toThrow(/requires a non-empty body/);
+
+			expect(mockExec).not.toHaveBeenCalled();
+		});
+
+		it("throws when comment is called without a body", async () => {
+			const tools = createPRTools(mockClient);
+
+			await expect(
+				tools.review({
+					repo: "owner/repo",
+					number: 5,
+					action: "comment",
+				}),
+			).rejects.toThrow(/requires a non-empty body/);
+
+			expect(mockExec).not.toHaveBeenCalled();
+		});
+
+		it("comments with body", async () => {
 			const tools = createPRTools(mockClient);
 			mockExec.mockResolvedValue({ code: 0, stdout: "", stderr: "" });
 
@@ -253,16 +275,10 @@ describe("pr-tools", () => {
 				body: "Just a comment",
 			});
 
-			expect(mockExec).toHaveBeenCalledWith([
-				"pr",
-				"review",
-				"5",
-				"--repo",
-				"owner/repo",
-				"--comment",
-				"--body",
-				"Just a comment",
-			]);
+			expect(mockExec).toHaveBeenCalledWith(
+				["pr", "review", "5", "--repo", "owner/repo", "--comment", "--body", "Just a comment"],
+				undefined,
+			);
 		});
 	});
 
@@ -277,15 +293,10 @@ describe("pr-tools", () => {
 				comment: "Closing as duplicate",
 			});
 
-			expect(mockExec).toHaveBeenCalledWith([
-				"pr",
-				"close",
-				"5",
-				"--repo",
-				"owner/repo",
-				"--comment",
-				"Closing as duplicate",
-			]);
+			expect(mockExec).toHaveBeenCalledWith(
+				["pr", "close", "5", "--repo", "owner/repo", "--comment", "Closing as duplicate"],
+				undefined,
+			);
 		});
 	});
 
@@ -294,12 +305,12 @@ describe("pr-tools", () => {
 			const tools = createPRTools(mockClient);
 			mockExec.mockResolvedValue({ code: 0, stdout: "", stderr: "" });
 
-			await tools.checkout({
-				repo: "owner/repo",
-				number: 5,
-			});
+			await tools.checkout({ repo: "owner/repo", number: 5 });
 
-			expect(mockExec).toHaveBeenCalledWith(["pr", "checkout", "5", "--repo", "owner/repo"]);
+			expect(mockExec).toHaveBeenCalledWith(
+				["pr", "checkout", "5", "--repo", "owner/repo"],
+				undefined,
+			);
 		});
 
 		it("checks out to specific branch name", async () => {
@@ -312,15 +323,10 @@ describe("pr-tools", () => {
 				branch: "pr-review",
 			});
 
-			expect(mockExec).toHaveBeenCalledWith([
-				"pr",
-				"checkout",
-				"5",
-				"--repo",
-				"owner/repo",
-				"--branch",
-				"pr-review",
-			]);
+			expect(mockExec).toHaveBeenCalledWith(
+				["pr", "checkout", "5", "--repo", "owner/repo", "--branch", "pr-review"],
+				undefined,
+			);
 		});
 	});
 });

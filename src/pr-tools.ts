@@ -4,7 +4,7 @@
  * GitHub pull request operations: create, list, view, diff, merge, review, close, checkout
  */
 
-import type { GHClient } from "./gh-client";
+import type { ExecOptions, GHClient } from "./gh-client";
 
 export interface CreatePRParams {
 	repo: string;
@@ -63,12 +63,22 @@ export interface CheckoutPRParams {
 
 export function createPRTools(client: GHClient) {
 	return {
-		async create(params: CreatePRParams) {
-			const args = ["pr", "create", "--repo", params.repo];
-
-			args.push("--title", params.title);
-			args.push("--head", params.head);
-			args.push("--base", params.base);
+		async create(params: CreatePRParams, options?: ExecOptions) {
+			// `gh pr create` does NOT support --json. It prints the PR URL on
+			// stdout; callers can follow up with `pr view --json` for structured
+			// data.
+			const args = [
+				"pr",
+				"create",
+				"--repo",
+				params.repo,
+				"--title",
+				params.title,
+				"--head",
+				params.head,
+				"--base",
+				params.base,
+			];
 
 			if (params.body) {
 				args.push("--body", params.body);
@@ -77,12 +87,10 @@ export function createPRTools(client: GHClient) {
 				args.push("--draft");
 			}
 
-			args.push("--json", "number,title,url,state,headRefName,baseRefName,createdAt");
-
-			return client.exec(args);
+			return client.exec(args, options);
 		},
 
-		async list(params: ListPRsParams) {
+		async list(params: ListPRsParams, options?: ExecOptions) {
 			const args = ["pr", "list", "--repo", params.repo];
 
 			if (params.state) {
@@ -103,10 +111,10 @@ export function createPRTools(client: GHClient) {
 
 			args.push("--json", "number,title,state,author,headRefName,baseRefName,updatedAt,createdAt");
 
-			return client.exec(args);
+			return client.exec(args, options);
 		},
 
-		async view(params: ViewPRParams) {
+		async view(params: ViewPRParams, options?: ExecOptions) {
 			const args = [
 				"pr",
 				"view",
@@ -114,20 +122,19 @@ export function createPRTools(client: GHClient) {
 				"--repo",
 				params.repo,
 				"--json",
-				"number,title,body,state,author,headRefName,baseRefName,additions,deletions,files,merged,mergeable,checksState",
+				"number,title,body,state,author,headRefName,baseRefName,additions,deletions,files,merged,mergeable,statusCheckRollup",
 			];
 
-			return client.exec(args);
+			return client.exec(args, options);
 		},
 
-		async diff(params: DiffPRParams) {
+		async diff(params: DiffPRParams, options?: ExecOptions) {
 			const args = ["pr", "diff", String(params.number), "--repo", params.repo];
-
-			// Note: diff returns plain text, not JSON
-			return client.exec(args);
+			// diff returns plain text
+			return client.exec(args, options);
 		},
 
-		async merge(params: MergePRParams) {
+		async merge(params: MergePRParams, options?: ExecOptions) {
 			const args = ["pr", "merge", String(params.number), "--repo", params.repo];
 
 			if (params.method) {
@@ -140,10 +147,16 @@ export function createPRTools(client: GHClient) {
 				args.push("--delete-branch");
 			}
 
-			return client.exec(args);
+			return client.exec(args, options);
 		},
 
-		async review(params: ReviewPRParams) {
+		async review(params: ReviewPRParams, options?: ExecOptions) {
+			// `gh pr review --request-changes` and `--comment` require a
+			// non-empty body; callers must validate before reaching this point.
+			if (params.action !== "approve" && !params.body) {
+				throw new Error(`review action '${params.action}' requires a non-empty body`);
+			}
+
 			const args = ["pr", "review", String(params.number), "--repo", params.repo];
 
 			switch (params.action) {
@@ -162,27 +175,27 @@ export function createPRTools(client: GHClient) {
 				args.push("--body", params.body);
 			}
 
-			return client.exec(args);
+			return client.exec(args, options);
 		},
 
-		async close(params: ClosePRParams) {
+		async close(params: ClosePRParams, options?: ExecOptions) {
 			const args = ["pr", "close", String(params.number), "--repo", params.repo];
 
 			if (params.comment) {
 				args.push("--comment", params.comment);
 			}
 
-			return client.exec(args);
+			return client.exec(args, options);
 		},
 
-		async checkout(params: CheckoutPRParams) {
+		async checkout(params: CheckoutPRParams, options?: ExecOptions) {
 			const args = ["pr", "checkout", String(params.number), "--repo", params.repo];
 
 			if (params.branch) {
 				args.push("--branch", params.branch);
 			}
 
-			return client.exec(args);
+			return client.exec(args, options);
 		},
 	};
 }

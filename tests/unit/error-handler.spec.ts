@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
 	GHAuthError,
+	GHError,
 	GHNotFoundError,
 	GHRateLimitError,
-	GHValidationError,
 	getInstallInstructions,
 } from "../../src/error-handler";
 
@@ -62,40 +62,39 @@ describe("GHAuthError", () => {
 
 describe("GHRateLimitError", () => {
 	it("has correct name", () => {
-		const error = new GHRateLimitError(60);
+		const error = new GHRateLimitError();
 		expect(error.name).toBe("GHRateLimitError");
 	});
 
-	it("includes retry after info", () => {
-		const error = new GHRateLimitError(60);
-		expect(error.message).toContain("60 seconds");
-		expect(error.retryAfter).toBe(60);
+	it("has a default message without detail", () => {
+		const error = new GHRateLimitError();
+		expect(error.message).toContain("rate limit");
 	});
 
-	it("handles different retry values", () => {
-		const error = new GHRateLimitError(300);
-		expect(error.message).toContain("300 seconds");
-		expect(error.retryAfter).toBe(300);
+	it("embeds stderr detail when provided", () => {
+		const error = new GHRateLimitError("API rate limit exceeded for user ID 1");
+		expect(error.message).toContain("API rate limit exceeded for user ID 1");
 	});
 });
 
-describe("GHValidationError", () => {
+describe("GHError", () => {
 	it("has correct name", () => {
-		const error = new GHValidationError("name", "already exists");
-		expect(error.name).toBe("GHValidationError");
+		const error = new GHError(1, "something went wrong");
+		expect(error.name).toBe("GHError");
 	});
 
-	it("includes field info", () => {
-		const error = new GHValidationError("name", "already exists");
-		expect(error.field).toBe("name");
-		expect(error.message).toContain("name");
-		expect(error.message).toContain("already exists");
+	it("preserves the exit code", () => {
+		const error = new GHError(1, "oops");
+		expect(error.code).toBe(1);
 	});
 
-	it("handles different fields", () => {
-		const error = new GHValidationError("description", "is required");
-		expect(error.field).toBe("description");
-		expect(error.message).toContain("description");
-		expect(error.message).toContain("is required");
+	it("uses stderr as the message when non-empty", () => {
+		const error = new GHError(1, "not a git repository\n");
+		expect(error.message).toBe("not a git repository");
+	});
+
+	it("falls back to a generic message when stderr is empty", () => {
+		const error = new GHError(1, "");
+		expect(error.message).toContain("exit code 1");
 	});
 });

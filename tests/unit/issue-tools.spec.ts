@@ -23,20 +23,21 @@ describe("issue-tools", () => {
 				labels: ["bug", "urgent"],
 			});
 
-			expect(mockExec).toHaveBeenCalledWith([
-				"issue",
-				"create",
-				"--repo",
-				"owner/repo",
-				"--title",
-				"Bug report",
-				"--body",
-				"Something is broken",
-				"--label",
-				"bug,urgent",
-				"--json",
-				"number,title,url,state,createdAt",
-			]);
+			expect(mockExec).toHaveBeenCalledWith(
+				[
+					"issue",
+					"create",
+					"--repo",
+					"owner/repo",
+					"--title",
+					"Bug report",
+					"--body",
+					"Something is broken",
+					"--label",
+					"bug,urgent",
+				],
+				undefined,
+			);
 		});
 
 		it("creates issue with assignees and milestone", async () => {
@@ -51,22 +52,23 @@ describe("issue-tools", () => {
 				projects: ["my-project"],
 			});
 
-			expect(mockExec).toHaveBeenCalledWith([
-				"issue",
-				"create",
-				"--repo",
-				"owner/repo",
-				"--title",
-				"Feature request",
-				"--assignee",
-				"user1,user2",
-				"--milestone",
-				"v1.0",
-				"--project",
-				"my-project",
-				"--json",
-				"number,title,url,state,createdAt",
-			]);
+			expect(mockExec).toHaveBeenCalledWith(
+				[
+					"issue",
+					"create",
+					"--repo",
+					"owner/repo",
+					"--title",
+					"Feature request",
+					"--assignee",
+					"user1,user2",
+					"--milestone",
+					"v1.0",
+					"--project",
+					"my-project",
+				],
+				undefined,
+			);
 		});
 	});
 
@@ -82,20 +84,23 @@ describe("issue-tools", () => {
 				limit: 30,
 			});
 
-			expect(mockExec).toHaveBeenCalledWith([
-				"issue",
-				"list",
-				"--repo",
-				"owner/repo",
-				"--state",
-				"open",
-				"--assignee",
-				"@me",
-				"--limit",
-				"30",
-				"--json",
-				"number,title,state,author,updatedAt,createdAt,labels",
-			]);
+			expect(mockExec).toHaveBeenCalledWith(
+				[
+					"issue",
+					"list",
+					"--repo",
+					"owner/repo",
+					"--state",
+					"open",
+					"--assignee",
+					"@me",
+					"--limit",
+					"30",
+					"--json",
+					"number,title,state,author,updatedAt,createdAt,labels",
+				],
+				undefined,
+			);
 		});
 
 		it("lists with author and label filters", async () => {
@@ -105,27 +110,30 @@ describe("issue-tools", () => {
 			await tools.list({
 				repo: "owner/repo",
 				author: "octocat",
-				label: ["bug", "help wanted"],
+				labels: ["bug", "help wanted"],
 				milestone: "v2.0",
 				project: "roadmap",
 			});
 
-			expect(mockExec).toHaveBeenCalledWith([
-				"issue",
-				"list",
-				"--repo",
-				"owner/repo",
-				"--author",
-				"octocat",
-				"--label",
-				"bug,help wanted",
-				"--milestone",
-				"v2.0",
-				"--project",
-				"roadmap",
-				"--json",
-				"number,title,state,author,updatedAt,createdAt,labels",
-			]);
+			expect(mockExec).toHaveBeenCalledWith(
+				[
+					"issue",
+					"list",
+					"--repo",
+					"owner/repo",
+					"--author",
+					"octocat",
+					"--label",
+					"bug,help wanted",
+					"--milestone",
+					"v2.0",
+					"--project",
+					"roadmap",
+					"--json",
+					"number,title,state,author,updatedAt,createdAt,labels",
+				],
+				undefined,
+			);
 		});
 	});
 
@@ -139,15 +147,18 @@ describe("issue-tools", () => {
 				number: 42,
 			});
 
-			expect(mockExec).toHaveBeenCalledWith([
-				"issue",
-				"view",
-				"42",
-				"--repo",
-				"owner/repo",
-				"--json",
-				"number,title,body,state,author,createdAt,updatedAt,comments,labels,assignees",
-			]);
+			expect(mockExec).toHaveBeenCalledWith(
+				[
+					"issue",
+					"view",
+					"42",
+					"--repo",
+					"owner/repo",
+					"--json",
+					"number,title,body,state,author,createdAt,updatedAt,comments,labels,assignees",
+				],
+				undefined,
+			);
 		});
 	});
 
@@ -162,15 +173,10 @@ describe("issue-tools", () => {
 				comment: "Fixed in v1.2.0",
 			});
 
-			expect(mockExec).toHaveBeenCalledWith([
-				"issue",
-				"close",
-				"42",
-				"--repo",
-				"owner/repo",
-				"--comment",
-				"Fixed in v1.2.0",
-			]);
+			expect(mockExec).toHaveBeenCalledWith(
+				["issue", "close", "42", "--repo", "owner/repo", "--comment", "Fixed in v1.2.0"],
+				undefined,
+			);
 		});
 
 		it("closes with reason", async () => {
@@ -183,15 +189,10 @@ describe("issue-tools", () => {
 				reason: "not_planned",
 			});
 
-			expect(mockExec).toHaveBeenCalledWith([
-				"issue",
-				"close",
-				"42",
-				"--repo",
-				"owner/repo",
-				"--reason",
-				"not_planned",
-			]);
+			expect(mockExec).toHaveBeenCalledWith(
+				["issue", "close", "42", "--repo", "owner/repo", "--reason", "not_planned"],
+				undefined,
+			);
 		});
 	});
 
@@ -205,7 +206,10 @@ describe("issue-tools", () => {
 				number: 42,
 			});
 
-			expect(mockExec).toHaveBeenCalledWith(["issue", "reopen", "42", "--repo", "owner/repo"]);
+			expect(mockExec).toHaveBeenCalledWith(
+				["issue", "reopen", "42", "--repo", "owner/repo"],
+				undefined,
+			);
 		});
 	});
 
@@ -220,15 +224,10 @@ describe("issue-tools", () => {
 				body: "Thanks for reporting!",
 			});
 
-			expect(mockExec).toHaveBeenCalledWith([
-				"issue",
-				"comment",
-				"42",
-				"--repo",
-				"owner/repo",
-				"--body",
-				"Thanks for reporting!",
-			]);
+			expect(mockExec).toHaveBeenCalledWith(
+				["issue", "comment", "42", "--repo", "owner/repo", "--body", "Thanks for reporting!"],
+				undefined,
+			);
 		});
 	});
 
@@ -244,17 +243,20 @@ describe("issue-tools", () => {
 				body: "Updated body",
 			});
 
-			expect(mockExec).toHaveBeenCalledWith([
-				"issue",
-				"edit",
-				"42",
-				"--repo",
-				"owner/repo",
-				"--title",
-				"Updated title",
-				"--body",
-				"Updated body",
-			]);
+			expect(mockExec).toHaveBeenCalledWith(
+				[
+					"issue",
+					"edit",
+					"42",
+					"--repo",
+					"owner/repo",
+					"--title",
+					"Updated title",
+					"--body",
+					"Updated body",
+				],
+				undefined,
+			);
 		});
 
 		it("edits labels and assignees", async () => {
@@ -270,21 +272,24 @@ describe("issue-tools", () => {
 				remove_assignees: ["user2"],
 			});
 
-			expect(mockExec).toHaveBeenCalledWith([
-				"issue",
-				"edit",
-				"42",
-				"--repo",
-				"owner/repo",
-				"--add-label",
-				"confirmed",
-				"--remove-label",
-				"triage",
-				"--add-assignee",
-				"user1",
-				"--remove-assignee",
-				"user2",
-			]);
+			expect(mockExec).toHaveBeenCalledWith(
+				[
+					"issue",
+					"edit",
+					"42",
+					"--repo",
+					"owner/repo",
+					"--add-label",
+					"confirmed",
+					"--remove-label",
+					"triage",
+					"--add-assignee",
+					"user1",
+					"--remove-assignee",
+					"user2",
+				],
+				undefined,
+			);
 		});
 	});
 });

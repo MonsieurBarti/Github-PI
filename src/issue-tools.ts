@@ -4,7 +4,7 @@
  * GitHub issue operations: create, list, view, close, reopen, comment, edit
  */
 
-import type { GHClient } from "./gh-client";
+import type { ExecOptions, GHClient } from "./gh-client";
 
 export interface CreateIssueParams {
 	repo: string;
@@ -21,7 +21,7 @@ export interface ListIssuesParams {
 	state?: "open" | "closed" | "all";
 	assignee?: string;
 	author?: string;
-	label?: string[];
+	labels?: string[];
 	limit?: number;
 	milestone?: string;
 	project?: string;
@@ -63,10 +63,11 @@ export interface EditIssueParams {
 
 export function createIssueTools(client: GHClient) {
 	return {
-		async create(params: CreateIssueParams) {
-			const args = ["issue", "create", "--repo", params.repo];
-
-			args.push("--title", params.title);
+		async create(params: CreateIssueParams, options?: ExecOptions) {
+			// `gh issue create` does NOT support --json. It prints the issue URL
+			// on stdout; callers can follow up with `issue view --json` for
+			// structured data.
+			const args = ["issue", "create", "--repo", params.repo, "--title", params.title];
 
 			if (params.body) {
 				args.push("--body", params.body);
@@ -84,12 +85,10 @@ export function createIssueTools(client: GHClient) {
 				args.push("--project", params.projects.join(","));
 			}
 
-			args.push("--json", "number,title,url,state,createdAt");
-
-			return client.exec(args);
+			return client.exec(args, options);
 		},
 
-		async list(params: ListIssuesParams) {
+		async list(params: ListIssuesParams, options?: ExecOptions) {
 			const args = ["issue", "list", "--repo", params.repo];
 
 			if (params.state) {
@@ -101,8 +100,8 @@ export function createIssueTools(client: GHClient) {
 			if (params.author) {
 				args.push("--author", params.author);
 			}
-			if (params.label?.length) {
-				args.push("--label", params.label.join(","));
+			if (params.labels?.length) {
+				args.push("--label", params.labels.join(","));
 			}
 			if (params.limit) {
 				args.push("--limit", String(params.limit));
@@ -116,10 +115,10 @@ export function createIssueTools(client: GHClient) {
 
 			args.push("--json", "number,title,state,author,updatedAt,createdAt,labels");
 
-			return client.exec(args);
+			return client.exec(args, options);
 		},
 
-		async view(params: ViewIssueParams) {
+		async view(params: ViewIssueParams, options?: ExecOptions) {
 			const args = [
 				"issue",
 				"view",
@@ -130,10 +129,10 @@ export function createIssueTools(client: GHClient) {
 				"number,title,body,state,author,createdAt,updatedAt,comments,labels,assignees",
 			];
 
-			return client.exec(args);
+			return client.exec(args, options);
 		},
 
-		async close(params: CloseIssueParams) {
+		async close(params: CloseIssueParams, options?: ExecOptions) {
 			const args = ["issue", "close", String(params.number), "--repo", params.repo];
 
 			if (params.comment) {
@@ -143,15 +142,15 @@ export function createIssueTools(client: GHClient) {
 				args.push("--reason", params.reason);
 			}
 
-			return client.exec(args);
+			return client.exec(args, options);
 		},
 
-		async reopen(params: ReopenIssueParams) {
+		async reopen(params: ReopenIssueParams, options?: ExecOptions) {
 			const args = ["issue", "reopen", String(params.number), "--repo", params.repo];
-			return client.exec(args);
+			return client.exec(args, options);
 		},
 
-		async comment(params: CommentOnIssueParams) {
+		async comment(params: CommentOnIssueParams, options?: ExecOptions) {
 			const args = [
 				"issue",
 				"comment",
@@ -161,10 +160,10 @@ export function createIssueTools(client: GHClient) {
 				"--body",
 				params.body,
 			];
-			return client.exec(args);
+			return client.exec(args, options);
 		},
 
-		async edit(params: EditIssueParams) {
+		async edit(params: EditIssueParams, options?: ExecOptions) {
 			const args = ["issue", "edit", String(params.number), "--repo", params.repo];
 
 			if (params.title) {
@@ -186,7 +185,7 @@ export function createIssueTools(client: GHClient) {
 				args.push("--remove-assignee", params.remove_assignees.join(","));
 			}
 
-			return client.exec(args);
+			return client.exec(args, options);
 		},
 	};
 }

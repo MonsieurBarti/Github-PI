@@ -2,7 +2,7 @@
 	"packages": {
 		".": {
 			"release-type": "node",
-			"package-name": "@the-forge-flow/lightpanda-pi",
+			"package-name": "@the-forge-flow/gh-pi",
 			"bump-minor-pre-major": true,
 			"bump-patch-for-minor-pre-major": true,
 			"draft": false,
