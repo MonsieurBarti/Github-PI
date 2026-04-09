@@ -1,11 +1,15 @@
 {
 	"name": "@the-forge-flow/gh-pi",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "GH-PI — PI extension for native GitHub CLI (gh) integration",
 	"type": "module",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
-	"files": ["dist", "README.md", "LICENSE"],
+	"files": [
+		"dist",
+		"README.md",
+		"LICENSE"
+	],
 	"scripts": {
 		"build": "tsc -p tsconfig.build.json",
 		"test": "vitest run",
@@ -39,7 +43,14 @@
 	"engines": {
 		"node": ">=20.0.0"
 	},
-	"keywords": ["pi-package", "pi", "extension", "github", "cli", "gh"],
+	"keywords": [
+		"pi-package",
+		"pi",
+		"extension",
+		"github",
+		"cli",
+		"gh"
+	],
 	"license": "MIT",
 	"repository": {
 		"type": "git",
@@ -53,6 +64,8 @@
 		"access": "public"
 	},
 	"pi": {
-		"extensions": ["./dist/index.js"]
+		"extensions": [
+			"./dist/index.js"
+		]
 	}
 }
