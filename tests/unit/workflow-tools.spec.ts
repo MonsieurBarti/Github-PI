@@ -1,0 +1,214 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { GHClient } from "../../src/gh-client";
+import { createWorkflowTools } from "../../src/workflow-tools";
+
+describe("workflow-tools", () => {
+	let mockClient: GHClient;
+	let mockExec: ReturnType<typeof vi.fn>;
+
+	beforeEach(() => {
+		mockExec = vi.fn();
+		mockClient = { exec: mockExec } as unknown as GHClient;
+	});
+
+	describe("list", () => {
+		it("lists all workflows", async () => {
+			const tools = createWorkflowTools(mockClient);
+			mockExec.mockResolvedValue({ code: 0, stdout: "[]", data: [] });
+
+			await tools.list({ repo: "owner/repo" });
+
+			expect(mockExec).toHaveBeenCalledWith([
+				"workflow",
+				"list",
+				"--repo",
+				"owner/repo",
+				"--json",
+				"id,name,path,state,timing",
+			]);
+		});
+
+		it("limits results", async () => {
+			const tools = createWorkflowTools(mockClient);
+			mockExec.mockResolvedValue({ code: 0, stdout: "[]", data: [] });
+
+			await tools.list({ repo: "owner/repo", limit: 10 });
+
+			expect(mockExec).toHaveBeenCalledWith([
+				"workflow",
+				"list",
+				"--repo",
+				"owner/repo",
+				"--limit",
+				"10",
+				"--json",
+				"id,name,path,state,timing",
+			]);
+		});
+	});
+
+	describe("view", () => {
+		it("views workflow by name", async () => {
+			const tools = createWorkflowTools(mockClient);
+			mockExec.mockResolvedValue({ code: 0, stdout: "yaml content", stderr: "" });
+
+			const result = await tools.view({
+				repo: "owner/repo",
+				workflow: "ci.yml",
+			});
+
+			expect(mockExec).toHaveBeenCalledWith([
+				"workflow",
+				"view",
+				"ci.yml",
+				"--repo",
+				"owner/repo",
+				"--yaml",
+			]);
+			expect(result.stdout).toBe("yaml content");
+		});
+
+		it("views workflow by ID", async () => {
+			const tools = createWorkflowTools(mockClient);
+			mockExec.mockResolvedValue({ code: 0, stdout: "{}", stderr: "" });
+
+			await tools.view({
+				repo: "owner/repo",
+				workflow: "123456",
+			});
+
+			expect(mockExec).toHaveBeenCalledWith([
+				"workflow",
+				"view",
+				"123456",
+				"--repo",
+				"owner/repo",
+				"--yaml",
+			]);
+		});
+	});
+
+	describe("run", () => {
+		it("triggers workflow_dispatch", async () => {
+			const tools = createWorkflowTools(mockClient);
+			mockExec.mockResolvedValue({ code: 0, stdout: "", stderr: "" });
+
+			await tools.run({
+				repo: "owner/repo",
+				workflow: "deploy.yml",
+				branch: "main",
+				inputs: { environment: "production", version: "1.2.0" },
+			});
+
+			expect(mockExec).toHaveBeenCalledWith([
+				"workflow",
+				"run",
+				"deploy.yml",
+				"--repo",
+				"owner/repo",
+				"--ref",
+				"main",
+				"--field",
+				"environment=production",
+				"--field",
+				"version=1.2.0",
+			]);
+		});
+
+		it("runs without inputs", async () => {
+			const tools = createWorkflowTools(mockClient);
+			mockExec.mockResolvedValue({ code: 0, stdout: "", stderr: "" });
+
+			await tools.run({
+				repo: "owner/repo",
+				workflow: "ci.yml",
+			});
+
+			expect(mockExec).toHaveBeenCalledWith(["workflow", "run", "ci.yml", "--repo", "owner/repo"]);
+		});
+	});
+
+	describe("logs", () => {
+		it("shows workflow run logs", async () => {
+			const tools = createWorkflowTools(mockClient);
+			mockExec.mockResolvedValue({ code: 0, stdout: "log output", stderr: "" });
+
+			const result = await tools.logs({
+				repo: "owner/repo",
+				run_id: "12345",
+			});
+
+			expect(mockExec).toHaveBeenCalledWith([
+				"run",
+				"view",
+				"12345",
+				"--repo",
+				"owner/repo",
+				"--logs",
+			]);
+			expect(result.stdout).toBe("log output");
+		});
+
+		it("shows specific job logs", async () => {
+			const tools = createWorkflowTools(mockClient);
+			mockExec.mockResolvedValue({ code: 0, stdout: "", stderr: "" });
+
+			await tools.logs({
+				repo: "owner/repo",
+				run_id: "12345",
+				job: "test",
+			});
+
+			expect(mockExec).toHaveBeenCalledWith([
+				"run",
+				"view",
+				"12345",
+				"--repo",
+				"owner/repo",
+				"--logs",
+				"--job",
+				"test",
+			]);
+		});
+	});
+
+	describe("disable", () => {
+		it("disables workflow", async () => {
+			const tools = createWorkflowTools(mockClient);
+			mockExec.mockResolvedValue({ code: 0, stdout: "", stderr: "" });
+
+			await tools.disable({
+				repo: "owner/repo",
+				workflow: "ci.yml",
+			});
+
+			expect(mockExec).toHaveBeenCalledWith([
+				"workflow",
+				"disable",
+				"ci.yml",
+				"--repo",
+				"owner/repo",
+			]);
+		});
+	});
+
+	describe("enable", () => {
+		it("enables workflow", async () => {
+			const tools = createWorkflowTools(mockClient);
+			mockExec.mockResolvedValue({ code: 0, stdout: "", stderr: "" });
+
+			await tools.enable({
+				repo: "owner/repo",
+				workflow: "ci.yml",
+			});
+
+			expect(mockExec).toHaveBeenCalledWith([
+				"workflow",
+				"enable",
+				"ci.yml",
+				"--repo",
+				"owner/repo",
+			]);
+		});
+	});
+});
