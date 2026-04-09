@@ -164,6 +164,24 @@ describe("repo-tools", () => {
 				undefined,
 			);
 		});
+
+		it("combines directory and branch correctly", async () => {
+			const tools = createRepoTools(mockClient);
+			mockExec.mockResolvedValue({ code: 0, stdout: "", stderr: "" });
+
+			await tools.clone({
+				owner: "octocat",
+				name: "hello-world",
+				directory: "my-clone",
+				branch: "develop",
+			});
+
+			// Directory comes before the -- separator; branch comes after as a git flag.
+			expect(mockExec).toHaveBeenCalledWith(
+				["repo", "clone", "octocat/hello-world", "my-clone", "--", "--branch", "develop"],
+				undefined,
+			);
+		});
 	});
 
 	describe("fork", () => {

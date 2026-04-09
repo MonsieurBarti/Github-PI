@@ -291,5 +291,273 @@ describe("gh-extension", () => {
 			expect(result.content[0].text.length).toBeLessThan(giant.length);
 			expect(result.content[0].text).toContain("truncated");
 		});
+
+		it("treats `gh --version` exit code != 0 as missing (not throwing)", async () => {
+			mockExec.mockImplementation(async (_cmd, args) => {
+				if (args[0] === "--version") {
+					return { code: 127, stdout: "", stderr: "command not found" };
+				}
+				return { code: 0, stdout: "", stderr: "" };
+			});
+
+			ghExtension(mockPi);
+			const sessionStart = eventHandlers.get("session_start") as SessionStartHandler;
+			await sessionStart({}, { hasUI: false, ui: { notify: vi.fn() } });
+
+			const tool = registeredTools.get("github_repo");
+			if (!tool) throw new Error("github_repo tool not registered");
+
+			await expect(
+				tool.execute("call-a", { action: "list" }, undefined, undefined, {}),
+			).rejects.toThrow(/gh CLI not found/);
+
+			// And auth should never have been probed because version failed first
+			const authCalled = mockExec.mock.calls.some(
+				([, args]) => Array.isArray(args) && args[0] === "auth",
+			);
+			expect(authCalled).toBe(false);
+		});
+
+		it("renders cancelled (exit 2) as a cancellation message, not Success", async () => {
+			mockExec.mockImplementation(async (_cmd, args) => {
+				if (args[0] === "--version") return { code: 0, stdout: "", stderr: "" };
+				if (args[0] === "auth") return { code: 0, stdout: "", stderr: "" };
+				return { code: 2, stdout: "", stderr: "operation cancelled by user" };
+			});
+
+			ghExtension(mockPi);
+			const sessionStart = eventHandlers.get("session_start") as SessionStartHandler;
+			await sessionStart({}, { hasUI: false, ui: { notify: vi.fn() } });
+
+			const tool = registeredTools.get("github_repo");
+			if (!tool) throw new Error("github_repo tool not registered");
+			const result = await tool.execute("call-b", { action: "list" }, undefined, undefined, {});
+
+			expect(result.content[0].text).toMatch(/cancelled/);
+			expect(result.content[0].text).not.toBe("Success");
+			expect(result.details).toMatchObject({ code: 2 });
+		});
+
+		it("propagates GHAuthError through tool.execute", async () => {
+			mockExec.mockImplementation(async (_cmd, args) => {
+				if (args[0] === "--version") return { code: 0, stdout: "", stderr: "" };
+				if (args[0] === "auth" && args[1] === "status") {
+					return { code: 0, stdout: "Logged in", stderr: "" };
+				}
+				// gh repo list rejects with auth failure
+				return { code: 4, stdout: "", stderr: "authentication required" };
+			});
+
+			ghExtension(mockPi);
+			const sessionStart = eventHandlers.get("session_start") as SessionStartHandler;
+			await sessionStart({}, { hasUI: false, ui: { notify: vi.fn() } });
+
+			const tool = registeredTools.get("github_repo");
+			if (!tool) throw new Error("github_repo tool not registered");
+
+			await expect(
+				tool.execute("call-c", { action: "list" }, undefined, undefined, {}),
+			).rejects.toThrow(/authentication required/);
+		});
+
+		it("propagates GHRateLimitError through tool.execute", async () => {
+			mockExec.mockImplementation(async (_cmd, args) => {
+				if (args[0] === "--version") return { code: 0, stdout: "", stderr: "" };
+				if (args[0] === "auth" && args[1] === "status") {
+					return { code: 0, stdout: "Logged in", stderr: "" };
+				}
+				return {
+					code: 1,
+					stdout: "",
+					stderr: "API rate limit exceeded for user ID 1",
+				};
+			});
+
+			ghExtension(mockPi);
+			const sessionStart = eventHandlers.get("session_start") as SessionStartHandler;
+			await sessionStart({}, { hasUI: false, ui: { notify: vi.fn() } });
+
+			const tool = registeredTools.get("github_repo");
+			if (!tool) throw new Error("github_repo tool not registered");
+
+			await expect(
+				tool.execute("call-d", { action: "list" }, undefined, undefined, {}),
+			).rejects.toThrow(/rate limit/i);
+		});
+
+		it("caches the binary probe across multiple tool calls", async () => {
+			mockExec.mockImplementation(async (_cmd, args) => {
+				if (args[0] === "--version") return { code: 0, stdout: "", stderr: "" };
+				if (args[0] === "auth") return { code: 0, stdout: "", stderr: "" };
+				return { code: 0, stdout: "[]", stderr: "" };
+			});
+
+			ghExtension(mockPi);
+			const sessionStart = eventHandlers.get("session_start") as SessionStartHandler;
+			await sessionStart({}, { hasUI: false, ui: { notify: vi.fn() } });
+
+			const tool = registeredTools.get("github_repo");
+			if (!tool) throw new Error("github_repo tool not registered");
+
+			// Two back-to-back calls
+			await tool.execute("call-e1", { action: "list" }, undefined, undefined, {});
+			await tool.execute("call-e2", { action: "list" }, undefined, undefined, {});
+
+			const versionCalls = mockExec.mock.calls.filter(
+				([, args]) => Array.isArray(args) && args[0] === "--version",
+			);
+			const authCalls = mockExec.mock.calls.filter(
+				([, args]) => Array.isArray(args) && args[0] === "auth",
+			);
+			// Probe ran once (at session_start) and was cached
+			expect(versionCalls.length).toBe(1);
+			expect(authCalls.length).toBe(1);
+		});
+
+		it("re-probes after session_shutdown resets detection", async () => {
+			mockExec.mockImplementation(async (_cmd, args) => {
+				if (args[0] === "--version") return { code: 0, stdout: "", stderr: "" };
+				if (args[0] === "auth") return { code: 0, stdout: "", stderr: "" };
+				return { code: 0, stdout: "[]", stderr: "" };
+			});
+
+			ghExtension(mockPi);
+			const sessionStart = eventHandlers.get("session_start") as SessionStartHandler;
+			await sessionStart({}, { hasUI: false, ui: { notify: vi.fn() } });
+
+			const tool = registeredTools.get("github_repo");
+			if (!tool) throw new Error("github_repo tool not registered");
+			await tool.execute("call-f1", { action: "list" }, undefined, undefined, {});
+
+			// Trigger shutdown handler
+			const shutdown = eventHandlers.get("session_shutdown") as () => void;
+			shutdown();
+
+			// Next tool call should re-probe (detectionStatus was reset to "unchecked")
+			await tool.execute("call-f2", { action: "list" }, undefined, undefined, {});
+
+			const versionCalls = mockExec.mock.calls.filter(
+				([, args]) => Array.isArray(args) && args[0] === "--version",
+			);
+			expect(versionCalls.length).toBe(2);
+		});
+
+		it("forwards github_pr list head/base/author filters to gh", async () => {
+			mockExec.mockImplementation(async (_cmd, args) => {
+				if (args[0] === "--version") return { code: 0, stdout: "", stderr: "" };
+				if (args[0] === "auth") return { code: 0, stdout: "", stderr: "" };
+				return { code: 0, stdout: "[]", stderr: "" };
+			});
+
+			ghExtension(mockPi);
+			const sessionStart = eventHandlers.get("session_start") as SessionStartHandler;
+			await sessionStart({}, { hasUI: false, ui: { notify: vi.fn() } });
+
+			const tool = registeredTools.get("github_pr");
+			if (!tool) throw new Error("github_pr tool not registered");
+			await tool.execute(
+				"call-pr-list",
+				{
+					action: "list",
+					repo: "owner/repo",
+					head: "feature",
+					base: "main",
+					author: "octocat",
+					limit: 5,
+				},
+				undefined,
+				undefined,
+				{},
+			);
+
+			const listCall = mockExec.mock.calls.find(
+				([, args]) => Array.isArray(args) && args[0] === "pr" && args[1] === "list",
+			);
+			expect(listCall).toBeDefined();
+			const args = listCall?.[1] as string[];
+			expect(args).toContain("--head");
+			expect(args).toContain("feature");
+			expect(args).toContain("--base");
+			expect(args).toContain("main");
+			expect(args).toContain("--author");
+			expect(args).toContain("octocat");
+		});
+
+		it("forwards github_issue create assignees/milestone/projects to gh", async () => {
+			mockExec.mockImplementation(async (_cmd, args) => {
+				if (args[0] === "--version") return { code: 0, stdout: "", stderr: "" };
+				if (args[0] === "auth") return { code: 0, stdout: "", stderr: "" };
+				return {
+					code: 0,
+					stdout: "https://github.com/owner/repo/issues/1",
+					stderr: "",
+				};
+			});
+
+			ghExtension(mockPi);
+			const sessionStart = eventHandlers.get("session_start") as SessionStartHandler;
+			await sessionStart({}, { hasUI: false, ui: { notify: vi.fn() } });
+
+			const tool = registeredTools.get("github_issue");
+			if (!tool) throw new Error("github_issue tool not registered");
+			await tool.execute(
+				"call-issue-create",
+				{
+					action: "create",
+					repo: "owner/repo",
+					title: "Bug",
+					assignees: ["alice", "bob"],
+					milestone: "v1.0",
+					projects: ["roadmap"],
+				},
+				undefined,
+				undefined,
+				{},
+			);
+
+			const createCall = mockExec.mock.calls.find(
+				([, args]) => Array.isArray(args) && args[0] === "issue" && args[1] === "create",
+			);
+			expect(createCall).toBeDefined();
+			const args = createCall?.[1] as string[];
+			expect(args).toContain("--assignee");
+			expect(args).toContain("alice,bob");
+			expect(args).toContain("--milestone");
+			expect(args).toContain("v1.0");
+			expect(args).toContain("--project");
+			expect(args).toContain("roadmap");
+		});
+
+		it("honors GH_CLI_PATH for both probe and tool calls", async () => {
+			const original = process.env.GH_CLI_PATH;
+			process.env.GH_CLI_PATH = "/opt/homebrew/bin/gh";
+			try {
+				mockExec.mockImplementation(async (_cmd, args) => {
+					if (args[0] === "--version") return { code: 0, stdout: "", stderr: "" };
+					if (args[0] === "auth") return { code: 0, stdout: "", stderr: "" };
+					return { code: 0, stdout: "[]", stderr: "" };
+				});
+
+				ghExtension(mockPi);
+				const sessionStart = eventHandlers.get("session_start") as SessionStartHandler;
+				await sessionStart({}, { hasUI: false, ui: { notify: vi.fn() } });
+
+				const tool = registeredTools.get("github_repo");
+				if (!tool) throw new Error("github_repo tool not registered");
+				await tool.execute("call-g", { action: "list" }, undefined, undefined, {});
+
+				// Every pi.exec call should have used the custom binary path
+				for (const call of mockExec.mock.calls) {
+					expect(call[0]).toBe("/opt/homebrew/bin/gh");
+				}
+			} finally {
+				if (original === undefined) {
+					// Avoid `delete` (biome perf/noDelete); Reflect is the functional form.
+					Reflect.deleteProperty(process.env, "GH_CLI_PATH");
+				} else {
+					process.env.GH_CLI_PATH = original;
+				}
+			}
+		});
 	});
 });
