@@ -4,7 +4,7 @@
  * GitHub Actions workflow operations: list, view, run, logs, disable, enable
  */
 
-import type { GHClient } from "./gh-client";
+import type { ExecOptions, GHClient } from "./gh-client";
 
 export interface ListWorkflowsParams {
 	repo: string;
@@ -41,25 +41,26 @@ export interface EnableWorkflowParams {
 
 export function createWorkflowTools(client: GHClient) {
 	return {
-		async list(params: ListWorkflowsParams) {
+		async list(params: ListWorkflowsParams, options?: ExecOptions) {
 			const args = ["workflow", "list", "--repo", params.repo];
 
 			if (params.limit) {
 				args.push("--limit", String(params.limit));
 			}
 
-			args.push("--json", "id,name,path,state,timing");
+			// Only id, name, path are valid --json fields for workflow list.
+			args.push("--json", "id,name,path");
 
-			return client.exec(args);
+			return client.exec(args, options);
 		},
 
-		async view(params: ViewWorkflowParams) {
+		async view(params: ViewWorkflowParams, options?: ExecOptions) {
 			const args = ["workflow", "view", params.workflow, "--repo", params.repo, "--yaml"];
 
-			return client.exec(args);
+			return client.exec(args, options);
 		},
 
-		async run(params: RunWorkflowParams) {
+		async run(params: RunWorkflowParams, options?: ExecOptions) {
 			const args = ["workflow", "run", params.workflow, "--repo", params.repo];
 
 			if (params.branch) {
@@ -72,27 +73,27 @@ export function createWorkflowTools(client: GHClient) {
 				}
 			}
 
-			return client.exec(args);
+			return client.exec(args, options);
 		},
 
-		async logs(params: WorkflowLogsParams) {
-			const args = ["run", "view", params.run_id, "--repo", params.repo, "--logs"];
+		async logs(params: WorkflowLogsParams, options?: ExecOptions) {
+			const args = ["run", "view", params.run_id, "--repo", params.repo, "--log"];
 
 			if (params.job) {
 				args.push("--job", params.job);
 			}
 
-			return client.exec(args);
+			return client.exec(args, options);
 		},
 
-		async disable(params: DisableWorkflowParams) {
+		async disable(params: DisableWorkflowParams, options?: ExecOptions) {
 			const args = ["workflow", "disable", params.workflow, "--repo", params.repo];
-			return client.exec(args);
+			return client.exec(args, options);
 		},
 
-		async enable(params: EnableWorkflowParams) {
+		async enable(params: EnableWorkflowParams, options?: ExecOptions) {
 			const args = ["workflow", "enable", params.workflow, "--repo", params.repo];
-			return client.exec(args);
+			return client.exec(args, options);
 		},
 	};
 }

@@ -1,70 +1,23 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import {
-	GHAuthError,
-	GHNotFoundError,
-	GHRateLimitError,
-	GHValidationError,
-} from "../../src/error-handler";
-import { GHClient } from "../../src/gh-client";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { GHAuthError, GHError, GHRateLimitError } from "../../src/error-handler";
+import { GHClient, type PiExecFn } from "../../src/gh-client";
 
 describe("GHClient", () => {
+	let mockExec: ReturnType<typeof vi.fn>;
 	let client: GHClient;
-	let mockExecSync: ReturnType<typeof vi.fn>;
-	const originalEnv = process.env;
 
 	beforeEach(() => {
-		client = new GHClient();
-		mockExecSync = vi.fn();
-		client.setExecSyncFn(mockExecSync);
-		// Clear GH_CLI_PATH for clean state
-		process.env.GH_CLI_PATH = undefined;
-	});
-
-	afterEach(() => {
-		process.env = originalEnv;
-	});
-
-	describe("detectBinarySync", () => {
-		it("returns path from GH_CLI_PATH env var", () => {
-			process.env.GH_CLI_PATH = "/custom/gh";
-			const path = client.detectBinarySync();
-			expect(path).toBe("/custom/gh");
-		});
-
-		it('returns "gh" when found in PATH', () => {
-			mockExecSync.mockReturnValue(Buffer.from("/usr/bin/gh\n"));
-			const path = client.detectBinarySync();
-			expect(path).toBe("gh");
-		});
-
-		it("throws GHNotFoundError when not found", () => {
-			mockExecSync.mockImplementation(() => {
-				throw new Error("not found");
-			});
-			expect(() => client.detectBinarySync()).toThrow(GHNotFoundError);
-		});
-
-		it("does not call which when env var is set", () => {
-			process.env.GH_CLI_PATH = "/custom/gh";
-			client.detectBinarySync();
-			expect(mockExecSync).not.toHaveBeenCalled();
-		});
+		mockExec = vi.fn();
+		client = new GHClient({ exec: mockExec as unknown as PiExecFn });
 	});
 
 	describe("exec", () => {
-		beforeEach(() => {
-			// Set up binary path for exec tests
-			mockExecSync.mockReturnValue(Buffer.from("/usr/bin/gh\n"));
-			client.detectBinarySync();
-		});
-
 		it("parses JSON output when --json flag present", async () => {
-			const mockPiExec = vi.fn().mockResolvedValue({
+			mockExec.mockResolvedValue({
 				code: 0,
 				stdout: '{"id": 123, "name": "test"}',
 				stderr: "",
 			});
-			client.setPiExecFn(mockPiExec);
 
 			const result = await client.exec(["repo", "view", "--json", "name"]);
 			expect(result.data).toEqual({ id: 123, name: "test" });
@@ -72,12 +25,11 @@ describe("GHClient", () => {
 		});
 
 		it("returns text output for non-JSON commands", async () => {
-			const mockPiExec = vi.fn().mockResolvedValue({
+			mockExec.mockResolvedValue({
 				code: 0,
 				stdout: "Hello world",
 				stderr: "",
 			});
-			client.setPiExecFn(mockPiExec);
 
 			const result = await client.exec(["--version"]);
 			expect(result.stdout).toBe("Hello world");
@@ -85,48 +37,51 @@ describe("GHClient", () => {
 		});
 
 		it("throws GHAuthError on exit code 4", async () => {
-			const mockPiExec = vi.fn().mockResolvedValue({
+			mockExec.mockResolvedValue({
 				code: 4,
 				stdout: "",
 				stderr: "authentication required",
 			});
-			client.setPiExecFn(mockPiExec);
 
 			await expect(client.exec(["repo", "list"])).rejects.toThrow(GHAuthError);
 		});
 
-		it("throws GHRateLimitError on exit code 8", async () => {
-			const mockPiExec = vi.fn().mockResolvedValue({
-				code: 8,
+		it("throws GHRateLimitError when stderr mentions API rate limit", async () => {
+			mockExec.mockResolvedValue({
+				code: 1,
 				stdout: "",
-				stderr: "rate limit exceeded",
+				stderr: "API rate limit exceeded for user ID 1",
 			});
-			client.setPiExecFn(mockPiExec);
 
 			await expect(client.exec(["api", "/user"])).rejects.toThrow(GHRateLimitError);
 		});
 
-		it("throws GHValidationError on exit code 2", async () => {
-			const mockPiExec = vi.fn().mockResolvedValue({
+		it("throws GHError on other non-zero exits with stderr message", async () => {
+			mockExec.mockResolvedValue({
+				code: 1,
+				stdout: "",
+				stderr: "HTTP 404: Not Found",
+			});
+
+			await expect(client.exec(["repo", "view", "nope/nope"])).rejects.toThrow(/HTTP 404/);
+		});
+
+		it("passes through exit code 2 (cancelled) without throwing", async () => {
+			mockExec.mockResolvedValue({
 				code: 2,
 				stdout: "",
-				stderr: "invalid arguments",
+				stderr: "cancelled",
 			});
-			client.setPiExecFn(mockPiExec);
 
-			await expect(client.exec(["repo", "create"])).rejects.toThrow(GHValidationError);
+			const result = await client.exec(["repo", "list"]);
+			expect(result.code).toBe(2);
 		});
 
 		it("passes timeout to pi.exec", async () => {
-			const mockPiExec = vi.fn().mockResolvedValue({
-				code: 0,
-				stdout: "{}",
-				stderr: "",
-			});
-			client.setPiExecFn(mockPiExec);
+			mockExec.mockResolvedValue({ code: 0, stdout: "{}", stderr: "" });
 
 			await client.exec(["repo", "list"], { timeout: 60000 });
-			expect(mockPiExec).toHaveBeenCalledWith(
+			expect(mockExec).toHaveBeenCalledWith(
 				"gh",
 				["repo", "list"],
 				expect.objectContaining({ timeout: 60000 }),
@@ -134,16 +89,11 @@ describe("GHClient", () => {
 		});
 
 		it("passes signal to pi.exec", async () => {
-			const mockPiExec = vi.fn().mockResolvedValue({
-				code: 0,
-				stdout: "{}",
-				stderr: "",
-			});
-			client.setPiExecFn(mockPiExec);
+			mockExec.mockResolvedValue({ code: 0, stdout: "{}", stderr: "" });
 
 			const controller = new AbortController();
 			await client.exec(["repo", "list"], { signal: controller.signal });
-			expect(mockPiExec).toHaveBeenCalledWith(
+			expect(mockExec).toHaveBeenCalledWith(
 				"gh",
 				["repo", "list"],
 				expect.objectContaining({ signal: controller.signal }),
@@ -151,37 +101,40 @@ describe("GHClient", () => {
 		});
 
 		it("handles invalid JSON gracefully", async () => {
-			const mockPiExec = vi.fn().mockResolvedValue({
+			mockExec.mockResolvedValue({
 				code: 0,
 				stdout: "not valid json",
 				stderr: "",
 			});
-			client.setPiExecFn(mockPiExec);
 
 			const result = await client.exec(["repo", "view", "--json", "name"]);
 			expect(result.data).toBeUndefined();
 			expect(result.stdout).toBe("not valid json");
 		});
 
-		it("throws error when piExecFn not set", async () => {
-			await expect(client.exec(["repo", "list"])).rejects.toThrow("PI exec function not set");
+		it("defaults binary to 'gh'", async () => {
+			mockExec.mockResolvedValue({ code: 0, stdout: "", stderr: "" });
+			await client.exec(["--version"]);
+			expect(mockExec).toHaveBeenCalledWith("gh", ["--version"], expect.any(Object));
 		});
 
-		it("throws error when binary not detected", async () => {
-			const newClient = new GHClient();
-			await expect(newClient.exec(["repo", "list"])).rejects.toThrow("Binary not detected");
-		});
-	});
+		it("honors custom binaryPath", async () => {
+			const customExec = vi.fn().mockResolvedValue({
+				code: 0,
+				stdout: "",
+				stderr: "",
+			});
+			const customClient = new GHClient({
+				exec: customExec as unknown as PiExecFn,
+				binaryPath: "/opt/homebrew/bin/gh",
+			});
 
-	describe("getBinaryPath", () => {
-		it("returns detected binary path", () => {
-			mockExecSync.mockReturnValue(Buffer.from("/usr/bin/gh\n"));
-			client.detectBinarySync();
-			expect(client.getBinaryPath()).toBe("gh");
-		});
-
-		it("throws when binary not detected", () => {
-			expect(() => client.getBinaryPath()).toThrow(GHNotFoundError);
+			await customClient.exec(["--version"]);
+			expect(customExec).toHaveBeenCalledWith(
+				"/opt/homebrew/bin/gh",
+				["--version"],
+				expect.any(Object),
+			);
 		});
 	});
 });

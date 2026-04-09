@@ -41,21 +41,22 @@ export class GHAuthError extends Error {
 }
 
 export class GHRateLimitError extends Error {
-	retryAfter: number;
-
-	constructor(retryAfter: number) {
-		super(`Rate limited. Retry after ${retryAfter} seconds.`);
+	constructor(detail?: string) {
+		super(detail ? `GitHub API rate limit hit: ${detail}` : "GitHub API rate limit hit");
 		this.name = "GHRateLimitError";
-		this.retryAfter = retryAfter;
 	}
 }
 
-export class GHValidationError extends Error {
-	field: string;
+/**
+ * Generic gh CLI error for any non-zero exit that is not auth, rate limit,
+ * or a user cancellation.
+ */
+export class GHError extends Error {
+	code: number;
 
-	constructor(field: string, reason: string) {
-		super(`Validation failed for '${field}': ${reason}`);
-		this.name = "GHValidationError";
-		this.field = field;
+	constructor(code: number, stderr: string) {
+		super(stderr.trim() || `gh CLI failed with exit code ${code}`);
+		this.name = "GHError";
+		this.code = code;
 	}
 }

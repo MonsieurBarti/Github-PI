@@ -8,22 +8,19 @@ describe("repo-tools", () => {
 
 	beforeEach(() => {
 		mockExec = vi.fn();
-		mockClient = {
-			exec: mockExec,
-		} as unknown as GHClient;
+		mockClient = { exec: mockExec } as unknown as GHClient;
 	});
 
 	describe("create", () => {
-		it("builds create command with all options", async () => {
+		it("builds create command with all options and no --json", async () => {
 			const tools = createRepoTools(mockClient);
 			mockExec.mockResolvedValue({
 				code: 0,
-				stdout: '{"name": "my-repo", "url": "https://github.com/user/my-repo"}',
+				stdout: "https://github.com/user/my-repo",
 				stderr: "",
-				data: { name: "my-repo", url: "https://github.com/user/my-repo" },
 			});
 
-			const result = await tools.create({
+			await tools.create({
 				name: "my-repo",
 				visibility: "private",
 				description: "My cool repo",
@@ -31,126 +28,103 @@ describe("repo-tools", () => {
 				template: "owner/template-repo",
 			});
 
-			expect(mockExec).toHaveBeenCalledWith([
-				"repo",
-				"create",
-				"my-repo",
-				"--private",
-				"--description",
-				"My cool repo",
-				"--add-readme",
-				"--template",
-				"owner/template-repo",
-				"--json",
-				"name,url,owner,description,visibility",
-			]);
-			expect(result.data).toEqual({ name: "my-repo", url: "https://github.com/user/my-repo" });
+			expect(mockExec).toHaveBeenCalledWith(
+				[
+					"repo",
+					"create",
+					"my-repo",
+					"--private",
+					"--description",
+					"My cool repo",
+					"--add-readme",
+					"--template",
+					"owner/template-repo",
+				],
+				undefined,
+			);
 		});
 
 		it("builds create command with minimal options", async () => {
 			const tools = createRepoTools(mockClient);
 			mockExec.mockResolvedValue({
 				code: 0,
-				stdout: "{}",
-				data: {},
+				stdout: "https://github.com/user/simple-repo",
+				stderr: "",
 			});
 
-			await tools.create({
-				name: "simple-repo",
-			});
+			await tools.create({ name: "simple-repo" });
 
-			expect(mockExec).toHaveBeenCalledWith([
-				"repo",
-				"create",
-				"simple-repo",
-				"--json",
-				"name,url,owner,description,visibility",
-			]);
+			expect(mockExec).toHaveBeenCalledWith(["repo", "create", "simple-repo"], undefined);
 		});
 
-		it("supports disabling issues and wiki", async () => {
+		it("propagates signal option", async () => {
 			const tools = createRepoTools(mockClient);
-			mockExec.mockResolvedValue({
-				code: 0,
-				stdout: "{}",
-				data: {},
-			});
+			mockExec.mockResolvedValue({ code: 0, stdout: "", stderr: "" });
 
-			await tools.create({
-				name: "minimal-repo",
-				enable_issues: false,
-				enable_wiki: false,
-			});
+			const controller = new AbortController();
+			await tools.create({ name: "sig-repo" }, { signal: controller.signal });
 
-			expect(mockExec).toHaveBeenCalledWith([
-				"repo",
-				"create",
-				"minimal-repo",
-				"--disable-issues",
-				"--disable-wiki",
-				"--json",
-				"name,url,owner,description,visibility",
-			]);
+			expect(mockExec).toHaveBeenCalledWith(["repo", "create", "sig-repo"], {
+				signal: controller.signal,
+			});
 		});
 	});
 
 	describe("list", () => {
 		it("lists repos with limit", async () => {
 			const tools = createRepoTools(mockClient);
-			mockExec.mockResolvedValue({
-				code: 0,
-				stdout: "[]",
-				data: [],
-			});
+			mockExec.mockResolvedValue({ code: 0, stdout: "[]", stderr: "", data: [] });
 
 			await tools.list({ limit: 10 });
 
-			expect(mockExec).toHaveBeenCalledWith([
-				"repo",
-				"list",
-				"--limit",
-				"10",
-				"--json",
-				"name,description,visibility,updatedAt,owner",
-			]);
+			expect(mockExec).toHaveBeenCalledWith(
+				["repo", "list", "--limit", "10", "--json", "name,description,visibility,updatedAt,owner"],
+				undefined,
+			);
 		});
 
 		it("lists repos for specific owner", async () => {
 			const tools = createRepoTools(mockClient);
-			mockExec.mockResolvedValue({ code: 0, stdout: "[]", data: [] });
+			mockExec.mockResolvedValue({ code: 0, stdout: "[]", stderr: "", data: [] });
 
 			await tools.list({ owner: "octocat", limit: 5 });
 
-			expect(mockExec).toHaveBeenCalledWith([
-				"repo",
-				"list",
-				"octocat",
-				"--limit",
-				"5",
-				"--json",
-				"name,description,visibility,updatedAt,owner",
-			]);
+			expect(mockExec).toHaveBeenCalledWith(
+				[
+					"repo",
+					"list",
+					"octocat",
+					"--limit",
+					"5",
+					"--json",
+					"name,description,visibility,updatedAt,owner",
+				],
+				undefined,
+			);
 		});
 
 		it("filters by visibility", async () => {
 			const tools = createRepoTools(mockClient);
-			mockExec.mockResolvedValue({ code: 0, stdout: "[]", data: [] });
+			mockExec.mockResolvedValue({ code: 0, stdout: "[]", stderr: "", data: [] });
 
 			await tools.list({ visibility: "public" });
 
-			expect(mockExec).toHaveBeenCalledWith([
-				"repo",
-				"list",
-				"--visibility",
-				"public",
-				"--json",
-				"name,description,visibility,updatedAt,owner",
-			]);
+			expect(mockExec).toHaveBeenCalledWith(
+				[
+					"repo",
+					"list",
+					"--visibility",
+					"public",
+					"--json",
+					"name,description,visibility,updatedAt,owner",
+				],
+				undefined,
+			);
 		});
 	});
 
 	describe("clone", () => {
-		it("builds clone command", async () => {
+		it("builds clone command with directory", async () => {
 			const tools = createRepoTools(mockClient);
 			mockExec.mockResolvedValue({ code: 0, stdout: "", stderr: "" });
 
@@ -160,22 +134,22 @@ describe("repo-tools", () => {
 				directory: "my-clone",
 			});
 
-			expect(mockExec).toHaveBeenCalledWith(["repo", "clone", "octocat/hello-world", "my-clone"]);
+			expect(mockExec).toHaveBeenCalledWith(
+				["repo", "clone", "octocat/hello-world", "my-clone"],
+				undefined,
+			);
 		});
 
 		it("clones without directory", async () => {
 			const tools = createRepoTools(mockClient);
 			mockExec.mockResolvedValue({ code: 0, stdout: "", stderr: "" });
 
-			await tools.clone({
-				owner: "octocat",
-				name: "hello-world",
-			});
+			await tools.clone({ owner: "octocat", name: "hello-world" });
 
-			expect(mockExec).toHaveBeenCalledWith(["repo", "clone", "octocat/hello-world"]);
+			expect(mockExec).toHaveBeenCalledWith(["repo", "clone", "octocat/hello-world"], undefined);
 		});
 
-		it("clones specific branch", async () => {
+		it("passes --branch through the git-flags separator", async () => {
 			const tools = createRepoTools(mockClient);
 			mockExec.mockResolvedValue({ code: 0, stdout: "", stderr: "" });
 
@@ -185,24 +159,17 @@ describe("repo-tools", () => {
 				branch: "develop",
 			});
 
-			expect(mockExec).toHaveBeenCalledWith([
-				"repo",
-				"clone",
-				"octocat/hello-world",
-				"--branch",
-				"develop",
-			]);
+			expect(mockExec).toHaveBeenCalledWith(
+				["repo", "clone", "octocat/hello-world", "--", "--branch", "develop"],
+				undefined,
+			);
 		});
 	});
 
 	describe("fork", () => {
-		it("forks a repo", async () => {
+		it("forks a repo without --json", async () => {
 			const tools = createRepoTools(mockClient);
-			mockExec.mockResolvedValue({
-				code: 0,
-				stdout: '{"name": "hello-world"}',
-				data: { name: "hello-world" },
-			});
+			mockExec.mockResolvedValue({ code: 0, stdout: "", stderr: "" });
 
 			await tools.fork({
 				owner: "octocat",
@@ -210,55 +177,42 @@ describe("repo-tools", () => {
 				default_branch_only: true,
 			});
 
-			expect(mockExec).toHaveBeenCalledWith([
-				"repo",
-				"fork",
-				"octocat/hello-world",
-				"--default-branch-only",
-				"--json",
-				"name,url,owner,parent",
-			]);
+			expect(mockExec).toHaveBeenCalledWith(
+				["repo", "fork", "octocat/hello-world", "--default-branch-only"],
+				undefined,
+			);
 		});
 
 		it("forks with clone option", async () => {
 			const tools = createRepoTools(mockClient);
-			mockExec.mockResolvedValue({ code: 0, stdout: "{}", data: {} });
+			mockExec.mockResolvedValue({ code: 0, stdout: "", stderr: "" });
 
-			await tools.fork({
-				owner: "octocat",
-				name: "hello-world",
-				clone: true,
-			});
+			await tools.fork({ owner: "octocat", name: "hello-world", clone: true });
 
-			expect(mockExec).toHaveBeenCalledWith([
-				"repo",
-				"fork",
-				"octocat/hello-world",
-				"--clone",
-				"--json",
-				"name,url,owner,parent",
-			]);
+			expect(mockExec).toHaveBeenCalledWith(
+				["repo", "fork", "octocat/hello-world", "--clone"],
+				undefined,
+			);
 		});
 	});
 
 	describe("view", () => {
 		it("views repo details", async () => {
 			const tools = createRepoTools(mockClient);
-			mockExec.mockResolvedValue({
-				code: 0,
-				stdout: "{}",
-				data: {},
-			});
+			mockExec.mockResolvedValue({ code: 0, stdout: "{}", stderr: "", data: {} });
 
 			await tools.view({ owner: "octocat", name: "hello-world" });
 
-			expect(mockExec).toHaveBeenCalledWith([
-				"repo",
-				"view",
-				"octocat/hello-world",
-				"--json",
-				"name,description,visibility,updatedAt,createdAt,stargazerCount,forkCount,owner,defaultBranchRef",
-			]);
+			expect(mockExec).toHaveBeenCalledWith(
+				[
+					"repo",
+					"view",
+					"octocat/hello-world",
+					"--json",
+					"name,description,visibility,updatedAt,createdAt,stargazerCount,forkCount,owner,defaultBranchRef",
+				],
+				undefined,
+			);
 		});
 	});
 
@@ -269,7 +223,10 @@ describe("repo-tools", () => {
 
 			await tools.delete({ owner: "user", name: "old-repo", confirm: true });
 
-			expect(mockExec).toHaveBeenCalledWith(["repo", "delete", "user/old-repo", "--yes"]);
+			expect(mockExec).toHaveBeenCalledWith(
+				["repo", "delete", "user/old-repo", "--yes"],
+				undefined,
+			);
 		});
 
 		it("throws error without confirmation", async () => {
@@ -288,7 +245,7 @@ describe("repo-tools", () => {
 
 			await tools.sync();
 
-			expect(mockExec).toHaveBeenCalledWith(["repo", "sync"]);
+			expect(mockExec).toHaveBeenCalledWith(["repo", "sync"], undefined);
 		});
 
 		it("syncs specific branch", async () => {
@@ -297,7 +254,7 @@ describe("repo-tools", () => {
 
 			await tools.sync({ branch: "main" });
 
-			expect(mockExec).toHaveBeenCalledWith(["repo", "sync", "--branch", "main"]);
+			expect(mockExec).toHaveBeenCalledWith(["repo", "sync", "--branch", "main"], undefined);
 		});
 	});
 });
