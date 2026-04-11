@@ -96,7 +96,7 @@ export default function ghExtension(pi: ExtensionAPI): void {
 		}
 
 		// Check for extension updates
-		const updateInfo = await checkForUpdates();
+		const updateInfo = await checkForUpdates(pi);
 		if (updateInfo?.updateAvailable) {
 			ctx.ui.notify(
 				`📦 Update available: ${updateInfo.latestVersion} (you have ${updateInfo.currentVersion}). Run: pi install npm:@the-forge-flow/gh-pi`,
