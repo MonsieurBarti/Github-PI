@@ -103,6 +103,30 @@ describe("issue-tools", () => {
 			);
 		});
 
+		it("lists issues with search query", async () => {
+			const tools = createIssueTools(mockClient);
+			mockExec.mockResolvedValue({ code: 0, stdout: "[]", data: [] });
+
+			await tools.list({
+				repo: "owner/repo",
+				search: "login bug in:title",
+			});
+
+			expect(mockExec).toHaveBeenCalledWith(
+				[
+					"issue",
+					"list",
+					"--repo",
+					"owner/repo",
+					"--search",
+					"login bug in:title",
+					"--json",
+					"number,title,state,author,updatedAt,createdAt,labels",
+				],
+				undefined,
+			);
+		});
+
 		it("lists with author and label filters", async () => {
 			const tools = createIssueTools(mockClient);
 			mockExec.mockResolvedValue({ code: 0, stdout: "[]", data: [] });

@@ -88,6 +88,30 @@ describe("pr-tools", () => {
 			);
 		});
 
+		it("lists PRs with search query", async () => {
+			const tools = createPRTools(mockClient);
+			mockExec.mockResolvedValue({ code: 0, stdout: "[]", stderr: "", data: [] });
+
+			await tools.list({
+				repo: "owner/repo",
+				search: "auth in:title",
+			});
+
+			expect(mockExec).toHaveBeenCalledWith(
+				[
+					"pr",
+					"list",
+					"--repo",
+					"owner/repo",
+					"--search",
+					"auth in:title",
+					"--json",
+					"number,title,state,author,headRefName,baseRefName,updatedAt,createdAt,url",
+				],
+				undefined,
+			);
+		});
+
 		it("filters by head and base", async () => {
 			const tools = createPRTools(mockClient);
 			mockExec.mockResolvedValue({ code: 0, stdout: "[]", stderr: "", data: [] });

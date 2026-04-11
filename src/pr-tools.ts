@@ -21,6 +21,7 @@ export interface ListPRsParams {
 	head?: string;
 	base?: string;
 	author?: string;
+	search?: string;
 	limit?: number;
 }
 
@@ -104,6 +105,9 @@ export function createPRTools(client: GHClient) {
 			}
 			if (params.author) {
 				args.push("--author", params.author);
+			}
+			if (params.search) {
+				args.push("--search", params.search);
 			}
 			if (params.limit) {
 				args.push("--limit", String(params.limit));

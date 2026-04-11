@@ -22,6 +22,7 @@ export interface ListIssuesParams {
 	assignee?: string;
 	author?: string;
 	labels?: string[];
+	search?: string;
 	limit?: number;
 	milestone?: string;
 	project?: string;
@@ -102,6 +103,9 @@ export function createIssueTools(client: GHClient) {
 			}
 			if (params.labels?.length) {
 				args.push("--label", params.labels.join(","));
+			}
+			if (params.search) {
+				args.push("--search", params.search);
 			}
 			if (params.limit) {
 				args.push("--limit", String(params.limit));

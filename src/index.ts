@@ -307,6 +307,12 @@ export default function ghExtension(pi: ExtensionAPI): void {
 				assignees: Type.Optional(Type.Array(Type.String(), { description: "Assignees (create)" })),
 				author: Type.Optional(Type.String({ description: "Filter by author" })),
 				labels: Type.Optional(Type.Array(Type.String(), { description: "Label names" })),
+				search: Type.Optional(
+					Type.String({
+						description:
+							"Search query using GitHub search syntax. E.g., 'login bug in:title', 'label:bug is:open'. Maps to gh --search flag.",
+					}),
+				),
 				limit: Type.Optional(Type.Number({ description: "Max results for list" })),
 				milestone: Type.Optional(
 					Type.String({ description: "Milestone name (create or list filter)" }),
@@ -353,6 +359,7 @@ export default function ghExtension(pi: ExtensionAPI): void {
 								assignee: params.assignee,
 								author: params.author,
 								labels: params.labels,
+								search: params.search,
 								limit: params.limit,
 								milestone: params.milestone,
 							},
@@ -453,6 +460,12 @@ export default function ghExtension(pi: ExtensionAPI): void {
 				head: Type.Optional(Type.String({ description: "Head branch (create, or list filter)" })),
 				base: Type.Optional(Type.String({ description: "Base branch (create, or list filter)" })),
 				author: Type.Optional(Type.String({ description: "Filter by author (list)" })),
+				search: Type.Optional(
+					Type.String({
+						description:
+							"Search query using GitHub search syntax. E.g., 'auth in:title', 'label:bug sort:updated-desc'. Maps to gh --search flag.",
+					}),
+				),
 				number: Type.Optional(Type.Number({ description: "PR number" })),
 				state: Type.Optional(StringEnum(["open", "closed", "merged", "all"] as const)),
 				draft: Type.Optional(Type.Boolean()),
@@ -499,6 +512,7 @@ export default function ghExtension(pi: ExtensionAPI): void {
 								head: params.head,
 								base: params.base,
 								author: params.author,
+								search: params.search,
 								limit: params.limit,
 							},
 							{ signal },
