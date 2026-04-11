@@ -13,6 +13,7 @@ import { type ExecResult, GHClient } from "./gh-client";
 import { createIssueTools } from "./issue-tools";
 import { createPRTools } from "./pr-tools";
 import { createRepoTools } from "./repo-tools";
+import { checkForUpdates } from "./update-check";
 import { createWorkflowTools } from "./workflow-tools";
 
 /**
@@ -92,6 +93,15 @@ export default function ghExtension(pi: ExtensionAPI): void {
 			case "unauthenticated":
 				ctx.ui.notify("gh CLI is installed but not authenticated. Run: gh auth login", "warning");
 				break;
+		}
+
+		// Check for extension updates
+		const updateInfo = await checkForUpdates();
+		if (updateInfo?.updateAvailable) {
+			ctx.ui.notify(
+				`📦 Update available: ${updateInfo.latestVersion} (you have ${updateInfo.currentVersion}). Run: pi install npm:@the-forge-flow/gh-pi`,
+				"info",
+			);
 		}
 	});
 
