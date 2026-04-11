@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.1](https://github.com/MonsieurBarti/GH-PI/compare/gh-pi-v0.2.0...gh-pi-v0.2.1) (2026-04-11)
+
+
+### Features
+
+* add read-only classification to tool prompt guidelines ([#7](https://github.com/MonsieurBarti/GH-PI/issues/7)) ([017f271](https://github.com/MonsieurBarti/GH-PI/commit/017f2710277bcedebf7a0f5f420551ec0f4df863))
+* add update notification on session start ([#8](https://github.com/MonsieurBarti/GH-PI/issues/8)) ([60a8f8f](https://github.com/MonsieurBarti/GH-PI/commit/60a8f8f99e839b7034357ff8ac6f357feddd1399))
+
 ## [0.2.0](https://github.com/MonsieurBarti/GH-PI/compare/gh-pi-v0.1.1...gh-pi-v0.2.0) (2026-04-09)
 
 
