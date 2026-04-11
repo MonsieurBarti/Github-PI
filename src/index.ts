@@ -141,6 +141,7 @@ export default function ghExtension(pi: ExtensionAPI): void {
 				"Always specify the action parameter",
 				"For delete action, confirm: true is required",
 				"Repo names should be in owner/name format when required",
+				"Actions 'list' and 'view' are read-only (safe to call in parallel). Actions 'create', 'clone', 'fork', 'delete', 'sync' have side effects — run serially.",
 			],
 			parameters: Type.Object({
 				action: StringEnum(["create", "clone", "fork", "list", "view", "delete", "sync"] as const, {
@@ -276,6 +277,7 @@ export default function ghExtension(pi: ExtensionAPI): void {
 				"Use for issue operations like creating, listing, closing",
 				"Always specify the repo in owner/name format",
 				"Issue numbers are required for view, close, reopen, comment, edit",
+				"Actions 'list' and 'view' are read-only (safe to call in parallel). Actions 'create', 'close', 'reopen', 'comment', 'edit' have side effects — run serially.",
 			],
 			parameters: Type.Object({
 				action: StringEnum(
@@ -424,6 +426,7 @@ export default function ghExtension(pi: ExtensionAPI): void {
 				"Always specify the repo in owner/name format",
 				"PR numbers are required for view, merge, review, close, checkout",
 				"review_action 'request-changes' and 'comment' require a non-empty body",
+				"Actions 'list', 'view', and 'diff' are read-only (safe to call in parallel). Actions 'create', 'merge', 'review', 'close', 'checkout' have side effects — run serially.",
 			],
 			parameters: Type.Object({
 				action: StringEnum(
@@ -579,6 +582,7 @@ export default function ghExtension(pi: ExtensionAPI): void {
 				"Use for workflow operations like running, viewing logs",
 				"Always specify the repo in owner/name format",
 				"run_id is required for logs action",
+				"Actions 'list', 'view', and 'logs' are read-only (safe to call in parallel). Actions 'run', 'disable', 'enable' have side effects — run serially.",
 			],
 			parameters: Type.Object({
 				action: StringEnum(["list", "view", "run", "logs", "disable", "enable"] as const, {
