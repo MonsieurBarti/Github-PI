@@ -46,18 +46,22 @@ export function formatPRView(data: unknown): string {
 	const pr = data as Record<string, unknown>;
 	const header = `PR #${pr.number}: ${pr.title} [${pr.state}]`;
 
-	const mergeInfo = pr.mergedAt
-		? ` merged ${formatDate(pr.mergedAt as string)} by ${authorLogin(pr.mergedBy)}`
+	const mergeDate = typeof pr.mergedAt === "string" ? pr.mergedAt : null;
+	const mergeInfo = mergeDate
+		? ` merged ${formatDate(mergeDate)} by ${authorLogin(pr.mergedBy)}`
 		: ` by ${authorLogin(pr.author)}`;
 
 	const branches = `${pr.headRefName ?? ""} -> ${pr.baseRefName ?? ""}`;
 	const changes = `+${pr.additions ?? 0} -${pr.deletions ?? 0}`;
 	const fileCount = Array.isArray(pr.files) ? `${pr.files.length} files` : "0 files";
 
+	const passingStates = ["SUCCESS", "SKIPPED", "NEUTRAL"];
 	const checks =
 		Array.isArray(pr.statusCheckRollup) && pr.statusCheckRollup.length > 0
 			? pr.statusCheckRollup.every(
-					(c: Record<string, unknown>) => c.state === "SUCCESS" || c.conclusion === "SUCCESS",
+					(c: Record<string, unknown>) =>
+						passingStates.includes(c.state as string) ||
+						passingStates.includes(c.conclusion as string),
 				)
 				? "checks: passing"
 				: "checks: pending/failing"
@@ -120,7 +124,8 @@ export function formatIssueView(data: unknown): string {
 			: "";
 
 	const commentCount = Array.isArray(issue.comments) ? `${issue.comments.length} comments` : "";
-	const created = `Created: ${formatDate(issue.createdAt as string)} by ${authorLogin(issue.author)}`;
+	const createdAt = typeof issue.createdAt === "string" ? issue.createdAt : null;
+	const created = `Created: ${formatDate(createdAt)} by ${authorLogin(issue.author)}`;
 
 	const metaParts = [labels, assignees, commentCount].filter(Boolean).join(" | ");
 	const lines = [header];
