@@ -109,7 +109,10 @@ export function createPRTools(client: GHClient) {
 				args.push("--limit", String(params.limit));
 			}
 
-			args.push("--json", "number,title,state,author,headRefName,baseRefName,updatedAt,createdAt");
+			args.push(
+				"--json",
+				"number,title,state,author,headRefName,baseRefName,updatedAt,createdAt,url",
+			);
 
 			return client.exec(args, options);
 		},
@@ -122,7 +125,7 @@ export function createPRTools(client: GHClient) {
 				"--repo",
 				params.repo,
 				"--json",
-				"number,title,body,state,author,headRefName,baseRefName,additions,deletions,files,merged,mergeable,statusCheckRollup",
+				"number,title,body,state,author,headRefName,baseRefName,additions,deletions,files,mergedAt,mergedBy,mergeable,statusCheckRollup",
 			];
 
 			return client.exec(args, options);

@@ -82,7 +82,7 @@ describe("pr-tools", () => {
 					"--limit",
 					"20",
 					"--json",
-					"number,title,state,author,headRefName,baseRefName,updatedAt,createdAt",
+					"number,title,state,author,headRefName,baseRefName,updatedAt,createdAt,url",
 				],
 				undefined,
 			);
@@ -112,7 +112,7 @@ describe("pr-tools", () => {
 					"--author",
 					"octocat",
 					"--json",
-					"number,title,state,author,headRefName,baseRefName,updatedAt,createdAt",
+					"number,title,state,author,headRefName,baseRefName,updatedAt,createdAt,url",
 				],
 				undefined,
 			);
@@ -120,7 +120,7 @@ describe("pr-tools", () => {
 	});
 
 	describe("view", () => {
-		it("views PR by number using statusCheckRollup field", async () => {
+		it("views PR by number with merge and check status fields", async () => {
 			const tools = createPRTools(mockClient);
 			mockExec.mockResolvedValue({ code: 0, stdout: "{}", stderr: "", data: {} });
 
@@ -134,7 +134,7 @@ describe("pr-tools", () => {
 					"--repo",
 					"owner/repo",
 					"--json",
-					"number,title,body,state,author,headRefName,baseRefName,additions,deletions,files,merged,mergeable,statusCheckRollup",
+					"number,title,body,state,author,headRefName,baseRefName,additions,deletions,files,mergedAt,mergedBy,mergeable,statusCheckRollup",
 				],
 				undefined,
 			);
