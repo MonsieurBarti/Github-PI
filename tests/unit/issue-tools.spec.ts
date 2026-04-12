@@ -73,6 +73,15 @@ describe("issue-tools", () => {
 	});
 
 	describe("list", () => {
+		it("clamps an excessive limit to 200", async () => {
+			const tools = createIssueTools(mockClient);
+			mockExec.mockResolvedValue({ code: 0, stdout: "[]", data: [] });
+
+			await tools.list({ repo: "owner/repo", limit: 5000 });
+
+			expect(mockExec).toHaveBeenCalledWith(expect.arrayContaining(["--limit", "200"]), undefined);
+		});
+
 		it("lists open issues", async () => {
 			const tools = createIssueTools(mockClient);
 			mockExec.mockResolvedValue({ code: 0, stdout: "[]", data: [] });

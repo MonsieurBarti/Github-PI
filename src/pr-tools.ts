@@ -6,6 +6,11 @@
 
 import type { ExecOptions, GHClient } from "./gh-client";
 
+// Clamp list results so a runaway `limit` doesn't drag back thousands of
+// PRs. gh's default is 30; 200 is a generous ceiling that covers any
+// realistic agent workflow without blowing the output budget.
+const MAX_LIMIT = 200;
+
 export interface CreatePRParams {
 	repo: string;
 	title: string;
@@ -110,7 +115,7 @@ export function createPRTools(client: GHClient) {
 				args.push("--search", params.search);
 			}
 			if (params.limit) {
-				args.push("--limit", String(params.limit));
+				args.push("--limit", String(Math.min(params.limit, MAX_LIMIT)));
 			}
 
 			args.push(

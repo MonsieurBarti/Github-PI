@@ -88,6 +88,15 @@ describe("pr-tools", () => {
 			);
 		});
 
+		it("clamps an excessive limit to 200", async () => {
+			const tools = createPRTools(mockClient);
+			mockExec.mockResolvedValue({ code: 0, stdout: "[]", stderr: "", data: [] });
+
+			await tools.list({ repo: "owner/repo", limit: 5000 });
+
+			expect(mockExec).toHaveBeenCalledWith(expect.arrayContaining(["--limit", "200"]), undefined);
+		});
+
 		it("lists PRs with search query", async () => {
 			const tools = createPRTools(mockClient);
 			mockExec.mockResolvedValue({ code: 0, stdout: "[]", stderr: "", data: [] });
