@@ -1,7 +1,7 @@
 import * as childProcess from "node:child_process";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { GHAuthError, GHError, GHRateLimitError } from "../../src/error-handler";
-import { GHClient, type PiExecFn, createGHClient } from "../../src/gh-client";
+import { GHAuthError, GHError, GHRateLimitError } from "../../src/error-handler.js";
+import { GHClient, type PiExecFn, createGHClient } from "../../src/gh-client.js";
 
 vi.mock("node:child_process", async (importOriginal) => {
 	const actual = await importOriginal<typeof import("node:child_process")>();

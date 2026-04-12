@@ -5,7 +5,7 @@ import {
 	GHNotFoundError,
 	GHRateLimitError,
 	getInstallInstructions,
-} from "../../src/error-handler";
+} from "../../src/error-handler.js";
 
 describe("getInstallInstructions", () => {
 	it("returns install instructions for macOS", () => {

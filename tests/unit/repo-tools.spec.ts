@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { GHClient } from "../../src/gh-client";
-import { createRepoTools } from "../../src/repo-tools";
+import type { GHClient } from "../../src/gh-client.js";
+import { createRepoTools } from "../../src/repo-tools.js";
 
 describe("repo-tools", () => {
 	let mockClient: GHClient;

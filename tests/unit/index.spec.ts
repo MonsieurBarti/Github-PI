@@ -1,6 +1,6 @@
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import ghExtension from "../../src/index";
+import ghExtension from "../../src/index.js";
 
 interface ToolParameter {
 	type: string;

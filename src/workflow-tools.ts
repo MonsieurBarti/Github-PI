@@ -4,7 +4,7 @@
  * GitHub Actions workflow operations: list, view, run, logs, disable, enable
  */
 
-import type { ExecOptions, GHClient } from "./gh-client";
+import type { ExecOptions, GHClient } from "./gh-client.js";
 
 export interface ListWorkflowsParams {
 	repo: string;

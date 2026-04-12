@@ -4,8 +4,8 @@
  * GitHub pull request operations: create, list, view, diff, merge, review, close, checkout
  */
 
-import { GHError } from "./error-handler";
-import type { ExecOptions, ExecResult, GHClient } from "./gh-client";
+import { GHError } from "./error-handler.js";
+import type { ExecOptions, ExecResult, GHClient } from "./gh-client.js";
 
 // Clamp list results so a runaway `limit` doesn't drag back thousands of
 // PRs. gh's default is 30; 200 is a generous ceiling that covers any

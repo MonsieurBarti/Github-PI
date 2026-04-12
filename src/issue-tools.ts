@@ -4,7 +4,7 @@
  * GitHub issue operations: create, list, view, close, reopen, comment, edit
  */
 
-import type { ExecOptions, GHClient } from "./gh-client";
+import type { ExecOptions, GHClient } from "./gh-client.js";
 
 const MAX_LIMIT = 200;
 

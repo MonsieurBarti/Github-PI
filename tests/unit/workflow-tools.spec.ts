@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { GHClient } from "../../src/gh-client";
-import { createWorkflowTools } from "../../src/workflow-tools";
+import type { GHClient } from "../../src/gh-client.js";
+import { createWorkflowTools } from "../../src/workflow-tools.js";
 
 describe("workflow-tools", () => {
 	let mockClient: GHClient;

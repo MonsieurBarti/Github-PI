@@ -7,7 +7,7 @@ import {
 	formatRepoList,
 	formatRepoView,
 	formatWorkflowList,
-} from "../../src/format";
+} from "../../src/format.js";
 
 describe("format", () => {
 	describe("formatPRList", () => {

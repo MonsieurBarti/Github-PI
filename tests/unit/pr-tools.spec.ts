@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { GHAuthError, GHError } from "../../src/error-handler";
-import type { GHClient } from "../../src/gh-client";
-import { createPRTools } from "../../src/pr-tools";
+import { GHAuthError, GHError } from "../../src/error-handler.js";
+import type { GHClient } from "../../src/gh-client.js";
+import { createPRTools } from "../../src/pr-tools.js";
 
 describe("pr-tools", () => {
 	let mockClient: GHClient;

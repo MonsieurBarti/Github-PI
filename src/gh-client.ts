@@ -6,7 +6,7 @@
  */
 
 import { execFile } from "node:child_process";
-import { GHAuthError, GHError, GHRateLimitError } from "./error-handler";
+import { GHAuthError, GHError, GHRateLimitError } from "./error-handler.js";
 
 export interface ExecResult {
 	code: number;

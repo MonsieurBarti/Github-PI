@@ -4,7 +4,7 @@
  * GitHub repository operations: create, clone, fork, list, view, delete, sync
  */
 
-import type { ExecOptions, GHClient } from "./gh-client";
+import type { ExecOptions, GHClient } from "./gh-client.js";
 
 export interface CreateRepoParams {
 	name: string;

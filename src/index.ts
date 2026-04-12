@@ -8,7 +8,7 @@ import { StringEnum } from "@mariozechner/pi-ai";
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import { defineTool, truncateHead } from "@mariozechner/pi-coding-agent";
 import { Type } from "@sinclair/typebox";
-import { GHNotFoundError, getInstallInstructions } from "./error-handler";
+import { GHNotFoundError, getInstallInstructions } from "./error-handler.js";
 import {
 	formatIssueList,
 	formatIssueView,
@@ -17,13 +17,13 @@ import {
 	formatRepoList,
 	formatRepoView,
 	formatWorkflowList,
-} from "./format";
-import { type ExecResult, GHClient } from "./gh-client";
-import { createIssueTools } from "./issue-tools";
-import { createPRTools } from "./pr-tools";
-import { createRepoTools } from "./repo-tools";
-import { checkForUpdates } from "./update-check";
-import { createWorkflowTools } from "./workflow-tools";
+} from "./format.js";
+import { type ExecResult, GHClient } from "./gh-client.js";
+import { createIssueTools } from "./issue-tools.js";
+import { createPRTools } from "./pr-tools.js";
+import { createRepoTools } from "./repo-tools.js";
+import { checkForUpdates } from "./update-check.js";
+import { createWorkflowTools } from "./workflow-tools.js";
 
 /**
  * Library surface — named exports for consumers who want to use gh-pi's
@@ -31,10 +31,10 @@ import { createWorkflowTools } from "./workflow-tools";
  * GitHub operations). The default export below keeps the PI extension
  * behavior unchanged.
  */
-export { createGHClient, GHClient } from "./gh-client";
-export type { ExecOptions, ExecResult, PiExecFn } from "./gh-client";
+export { createGHClient, GHClient } from "./gh-client.js";
+export type { ExecOptions, ExecResult, PiExecFn } from "./gh-client.js";
 
-export { createPRTools } from "./pr-tools";
+export { createPRTools } from "./pr-tools.js";
 export type {
 	ChecksParams,
 	CheckoutPRParams,
@@ -45,9 +45,9 @@ export type {
 	MergePRParams,
 	ReviewPRParams,
 	ViewPRParams,
-} from "./pr-tools";
+} from "./pr-tools.js";
 
-export { createIssueTools } from "./issue-tools";
+export { createIssueTools } from "./issue-tools.js";
 export type {
 	CloseIssueParams,
 	CommentOnIssueParams,
@@ -56,9 +56,9 @@ export type {
 	ListIssuesParams,
 	ReopenIssueParams,
 	ViewIssueParams,
-} from "./issue-tools";
+} from "./issue-tools.js";
 
-export { createRepoTools } from "./repo-tools";
+export { createRepoTools } from "./repo-tools.js";
 export type {
 	CloneRepoParams,
 	CreateRepoParams,
@@ -67,9 +67,9 @@ export type {
 	ListReposParams,
 	SyncRepoParams,
 	ViewRepoParams,
-} from "./repo-tools";
+} from "./repo-tools.js";
 
-export { createWorkflowTools } from "./workflow-tools";
+export { createWorkflowTools } from "./workflow-tools.js";
 export type {
 	DisableWorkflowParams,
 	EnableWorkflowParams,
@@ -77,9 +77,9 @@ export type {
 	RunWorkflowParams,
 	ViewWorkflowParams,
 	WorkflowLogsParams,
-} from "./workflow-tools";
+} from "./workflow-tools.js";
 
-export { GHAuthError, GHError, GHNotFoundError, GHRateLimitError } from "./error-handler";
+export { GHAuthError, GHError, GHNotFoundError, GHRateLimitError } from "./error-handler.js";
 
 /**
  * Main extension export
