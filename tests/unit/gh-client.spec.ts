@@ -264,4 +264,30 @@ describe("createGHClient", () => {
 			execFileSpy.mockRestore();
 		}
 	});
+
+	it("default exec removes the abort listener after normal completion", async () => {
+		const execFileSpy = vi.spyOn(childProcess, "execFile").mockImplementation(((
+			_file: string,
+			_args: readonly string[],
+			_opts: unknown,
+			cb: (err: Error | null, stdout: string, stderr: string) => void,
+		) => {
+			setImmediate(() => cb(null, "ok", ""));
+			return { kill: () => {} } as unknown as ReturnType<typeof childProcess.execFile>;
+		}) as unknown as typeof childProcess.execFile);
+
+		try {
+			const controller = new AbortController();
+			const addSpy = vi.spyOn(controller.signal, "addEventListener");
+			const removeSpy = vi.spyOn(controller.signal, "removeEventListener");
+
+			const client = createGHClient();
+			await client.exec(["--version"], { signal: controller.signal });
+
+			expect(addSpy).toHaveBeenCalledWith("abort", expect.any(Function), { once: true });
+			expect(removeSpy).toHaveBeenCalledWith("abort", expect.any(Function));
+		} finally {
+			execFileSpy.mockRestore();
+		}
+	});
 });

@@ -57,6 +57,8 @@ const RATE_LIMIT_PATTERNS = [
 function defaultNodeExec(): PiExecFn {
 	return async (command, args, options) => {
 		return new Promise((resolve) => {
+			let onAbort: (() => void) | undefined;
+
 			const child = execFile(
 				command,
 				args,
@@ -65,6 +67,9 @@ function defaultNodeExec(): PiExecFn {
 					maxBuffer: 64 * 1024 * 1024,
 				},
 				(err, stdout, stderr) => {
+					if (onAbort && options?.signal) {
+						options.signal.removeEventListener("abort", onAbort);
+					}
 					if (err) {
 						const e = err as Error & {
 							code?: number | string;
@@ -90,12 +95,12 @@ function defaultNodeExec(): PiExecFn {
 			);
 
 			if (options?.signal) {
-				const onAbort = () => {
-					child.kill();
-				};
 				if (options.signal.aborted) {
 					child.kill();
 				} else {
+					onAbort = () => {
+						child.kill();
+					};
 					options.signal.addEventListener("abort", onAbort, { once: true });
 				}
 			}
