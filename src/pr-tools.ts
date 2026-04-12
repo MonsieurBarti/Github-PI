@@ -134,7 +134,7 @@ export function createPRTools(client: GHClient) {
 				"--repo",
 				params.repo,
 				"--json",
-				"number,title,body,state,author,headRefName,baseRefName,additions,deletions,files,mergedAt,mergedBy,mergeable,statusCheckRollup",
+				"number,title,body,state,author,headRefName,baseRefName,additions,deletions,files,mergedAt,mergedBy,mergeable,statusCheckRollup,comments",
 			];
 
 			return client.exec(args, options);

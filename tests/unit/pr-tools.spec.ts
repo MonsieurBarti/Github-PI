@@ -167,7 +167,7 @@ describe("pr-tools", () => {
 					"--repo",
 					"owner/repo",
 					"--json",
-					"number,title,body,state,author,headRefName,baseRefName,additions,deletions,files,mergedAt,mergedBy,mergeable,statusCheckRollup",
+					"number,title,body,state,author,headRefName,baseRefName,additions,deletions,files,mergedAt,mergedBy,mergeable,statusCheckRollup,comments",
 				],
 				undefined,
 			);
