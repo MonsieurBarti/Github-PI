@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.2.3](https://github.com/MonsieurBarti/GH-PI/compare/gh-pi-v0.2.2...gh-pi-v0.2.3) (2026-04-12)
+
+
+### Features
+
+* **gh-client:** add createGHClient factory with Node default exec ([6fa30ff](https://github.com/MonsieurBarti/GH-PI/commit/6fa30ffd3434136be399756fddb7ac0104e89bb6))
+* **gh-client:** attach stdout to GHError for failure-details preservation ([0b6420e](https://github.com/MonsieurBarti/GH-PI/commit/0b6420ee6680314e761d6540f76b4e8e6f84c739))
+* **index:** add library-style named exports for TFF consumers ([d5e2941](https://github.com/MonsieurBarti/GH-PI/commit/d5e294142b3102c5ebe766268565d56682240e75))
+* library-style surface for TFF integration ([960ce98](https://github.com/MonsieurBarti/GH-PI/commit/960ce985fedf41bf6ef64a6d96a8a297d6001069))
+* **pr-tools:** add checks() with watch/required and failure-returns-info ([14cf550](https://github.com/MonsieurBarti/GH-PI/commit/14cf550576817771e9bddbc86cae9ceeda4f7cd9))
+* **pr-tools:** include comments field in pr.view JSON response ([d9d58d8](https://github.com/MonsieurBarti/GH-PI/commit/d9d58d8b6b54b17012ba983a047601dd5c0c1612))
+
+
+### Bug Fixes
+
+* **gh-client:** remove abort listener after defaultNodeExec completes ([58b41ba](https://github.com/MonsieurBarti/GH-PI/commit/58b41baa74a201249ae097b772a269190fb41205))
+
 ## [0.2.2](https://github.com/MonsieurBarti/GH-PI/compare/gh-pi-v0.2.1...gh-pi-v0.2.2) (2026-04-12)
 
 
