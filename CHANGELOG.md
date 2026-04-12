@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.2.2](https://github.com/MonsieurBarti/GH-PI/compare/gh-pi-v0.2.1...gh-pi-v0.2.2) (2026-04-12)
+
+
+### Features
+
+* add PR and issue summary formatters ([8a4215d](https://github.com/MonsieurBarti/GH-PI/commit/8a4215d146537932ec7e16344f48c755b7a730ce))
+* add repo and workflow summary formatters ([4e6c366](https://github.com/MonsieurBarti/GH-PI/commit/4e6c3660ba44c9b4739104f1c5de11e04766441a))
+* add search parameter to PR and issue list actions ([f62bfa7](https://github.com/MonsieurBarti/GH-PI/commit/f62bfa70cba6b3482e7acfe30889ea21d848cea2))
+* clamp list limit to 200 to prevent pathological requests ([5eab031](https://github.com/MonsieurBarti/GH-PI/commit/5eab03129c68589e240185ec76f0a3252be5ce99))
+* integrate detail parameter and summary formatters into all tools ([c1dd512](https://github.com/MonsieurBarti/GH-PI/commit/c1dd512b167634b0048933a5cab4453587c4856b))
+* overhaul prompt guidelines and parameter descriptions for all tools ([28d791c](https://github.com/MonsieurBarti/GH-PI/commit/28d791c428181f04b76aab1708418dd1462e6a12))
+* **v0.3:** agent UX, output reduction, and prompt guidance ([d49ef7c](https://github.com/MonsieurBarti/GH-PI/commit/d49ef7cbda6986167fc50786d85d2e307a0045f7))
+
+
+### Bug Fixes
+
+* replace invalid 'merged' JSON field with 'mergedAt' and 'mergedBy' in pr view ([ae94c97](https://github.com/MonsieurBarti/GH-PI/commit/ae94c973f045d9c2685855bd0716eda26d4cbe69))
+* safer type narrowing and check status handling in formatters ([37b4b0b](https://github.com/MonsieurBarti/GH-PI/commit/37b4b0b9f53619150affd40b81b76c52a6d0ac4e))
+
 ## [0.2.1](https://github.com/MonsieurBarti/GH-PI/compare/gh-pi-v0.2.0...gh-pi-v0.2.1) (2026-04-11)
 
 
