@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.5](https://github.com/MonsieurBarti/GH-PI/compare/gh-pi-v0.2.4...gh-pi-v0.2.5) (2026-04-15)
+
+
+### Features
+
+* make update checks non-blocking ([cba6f3e](https://github.com/MonsieurBarti/GH-PI/commit/cba6f3e65273139cd46ce291368523cdc3087a30))
+* make update checks non-blocking ([425f1a1](https://github.com/MonsieurBarti/GH-PI/commit/425f1a195e89a648154104440df54ea3f1a05a02))
+
 ## [0.2.4](https://github.com/MonsieurBarti/GH-PI/compare/gh-pi-v0.2.3...gh-pi-v0.2.4) (2026-04-12)
 
 
