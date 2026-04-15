@@ -160,14 +160,15 @@ export default function ghExtension(pi: ExtensionAPI): void {
 				break;
 		}
 
-		// Check for extension updates
-		const updateInfo = await checkForUpdates(pi);
-		if (updateInfo?.updateAvailable) {
-			ctx.ui.notify(
-				`📦 Update available: ${updateInfo.latestVersion} (you have ${updateInfo.currentVersion}). Run: pi install npm:@the-forge-flow/gh-pi`,
-				"info",
-			);
-		}
+		// Check for extension updates (non-blocking)
+		void checkForUpdates(pi).then((info) => {
+			if (info?.updateAvailable) {
+				ctx.ui.notify(
+					`📦 Update available: ${info.latestVersion} (you have ${info.currentVersion}). Run: pi install npm:@the-forge-flow/gh-pi`,
+					"info",
+				);
+			}
+		});
 	});
 
 	pi.on("session_shutdown", () => {
