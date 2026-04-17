@@ -39,6 +39,14 @@ export interface EnableWorkflowParams {
 	workflow: string;
 }
 
+export interface ListRunsParams {
+	repo: string;
+	workflow?: string;
+	branch?: string;
+	status?: string;
+	limit?: number;
+}
+
 export function createWorkflowTools(client: GHClient) {
 	return {
 		async list(params: ListWorkflowsParams, options?: ExecOptions) {
@@ -93,6 +101,32 @@ export function createWorkflowTools(client: GHClient) {
 
 		async enable(params: EnableWorkflowParams, options?: ExecOptions) {
 			const args = ["workflow", "enable", params.workflow, "--repo", params.repo];
+			return client.exec(args, options);
+		},
+
+		async runs(params: ListRunsParams, options?: ExecOptions) {
+			const args = [
+				"run",
+				"list",
+				"--repo",
+				params.repo,
+				"--json",
+				"attempt,conclusion,createdAt,databaseId,displayTitle,event,headBranch,headSha,name,number,startedAt,status,updatedAt,url,workflowDatabaseId,workflowName",
+			];
+
+			if (params.workflow) {
+				args.push("--workflow", params.workflow);
+			}
+			if (params.branch) {
+				args.push("--branch", params.branch);
+			}
+			if (params.status) {
+				args.push("--status", params.status);
+			}
+			if (params.limit) {
+				args.push("--limit", String(params.limit));
+			}
+
 			return client.exec(args, options);
 		},
 	};

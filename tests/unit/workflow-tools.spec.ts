@@ -161,4 +161,97 @@ describe("workflow-tools", () => {
 			);
 		});
 	});
+
+	describe("runs", () => {
+		it("lists workflow runs with json fields", async () => {
+			const tools = createWorkflowTools(mockClient);
+			mockExec.mockResolvedValue({ code: 0, stdout: "[]", stderr: "", data: [] });
+
+			await tools.runs({ repo: "owner/repo" });
+
+			expect(mockExec).toHaveBeenCalledWith(
+				[
+					"run",
+					"list",
+					"--repo",
+					"owner/repo",
+					"--json",
+					"attempt,conclusion,createdAt,databaseId,displayTitle,event,headBranch,headSha,name,number,startedAt,status,updatedAt,url,workflowDatabaseId,workflowName",
+				],
+				undefined,
+			);
+		});
+
+		it("filters by workflow", async () => {
+			const tools = createWorkflowTools(mockClient);
+			mockExec.mockResolvedValue({ code: 0, stdout: "[]", stderr: "", data: [] });
+
+			await tools.runs({ repo: "owner/repo", workflow: "ci.yml" });
+
+			expect(mockExec).toHaveBeenCalledWith(
+				expect.arrayContaining(["--workflow", "ci.yml"]),
+				undefined,
+			);
+		});
+
+		it("filters by branch", async () => {
+			const tools = createWorkflowTools(mockClient);
+			mockExec.mockResolvedValue({ code: 0, stdout: "[]", stderr: "", data: [] });
+
+			await tools.runs({ repo: "owner/repo", branch: "main" });
+
+			expect(mockExec).toHaveBeenCalledWith(
+				expect.arrayContaining(["--branch", "main"]),
+				undefined,
+			);
+		});
+
+		it("filters by status", async () => {
+			const tools = createWorkflowTools(mockClient);
+			mockExec.mockResolvedValue({ code: 0, stdout: "[]", stderr: "", data: [] });
+
+			await tools.runs({ repo: "owner/repo", status: "failure" });
+
+			expect(mockExec).toHaveBeenCalledWith(
+				expect.arrayContaining(["--status", "failure"]),
+				undefined,
+			);
+		});
+
+		it("limits results", async () => {
+			const tools = createWorkflowTools(mockClient);
+			mockExec.mockResolvedValue({ code: 0, stdout: "[]", stderr: "", data: [] });
+
+			await tools.runs({ repo: "owner/repo", limit: 10 });
+
+			expect(mockExec).toHaveBeenCalledWith(expect.arrayContaining(["--limit", "10"]), undefined);
+		});
+
+		it("combines all filters", async () => {
+			const tools = createWorkflowTools(mockClient);
+			mockExec.mockResolvedValue({ code: 0, stdout: "[]", stderr: "", data: [] });
+
+			await tools.runs({
+				repo: "owner/repo",
+				workflow: "ci.yml",
+				branch: "main",
+				status: "failure",
+				limit: 5,
+			});
+
+			expect(mockExec).toHaveBeenCalledWith(
+				expect.arrayContaining([
+					"--workflow",
+					"ci.yml",
+					"--branch",
+					"main",
+					"--status",
+					"failure",
+					"--limit",
+					"5",
+				]),
+				undefined,
+			);
+		});
+	});
 });
