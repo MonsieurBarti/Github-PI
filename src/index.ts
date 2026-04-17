@@ -10,12 +10,14 @@ import { defineTool, truncateHead } from "@mariozechner/pi-coding-agent";
 import { Type } from "@sinclair/typebox";
 import { GHNotFoundError, getInstallInstructions } from "./error-handler.js";
 import {
+	formatChecksList,
 	formatIssueList,
 	formatIssueView,
 	formatPRList,
 	formatPRView,
 	formatRepoList,
 	formatRepoView,
+	formatRunsList,
 	formatWorkflowList,
 } from "./format.js";
 import { type ExecResult, GHClient } from "./gh-client.js";
@@ -73,6 +75,7 @@ export { createWorkflowTools } from "./workflow-tools.js";
 export type {
 	DisableWorkflowParams,
 	EnableWorkflowParams,
+	ListRunsParams,
 	ListWorkflowsParams,
 	RunWorkflowParams,
 	ViewWorkflowParams,
@@ -581,7 +584,7 @@ Issue numbers are required for view, close, reopen, comment, edit.`,
 		defineTool({
 			name: "tff-github_pr",
 			label: "GitHub Pull Request",
-			description: `Manage GitHub pull requests. Actions: create, list, view, diff, merge, review, close, checkout.
+			description: `Manage GitHub pull requests. Actions: create, list, view, diff, merge, review, close, checkout, checks.
 
 Common patterns:
 - Find merged PRs: action "list" with state "merged"
@@ -589,6 +592,7 @@ Common patterns:
 - Search PRs by keyword: action "list" with search "auth in:title,body"
 - Review a PR: first "view" to read it, then "diff" for changes, then "review"
 - Create a PR: requires title, head (source branch), and base (target branch)
+- Check PR status: action "checks" with repo and number to see CI status
 
 Output: returns compact summaries by default. Set detail "full" for raw JSON when you need specific field values.
 Do NOT chain list then view for every item. Use search/filters to narrow results first.`,
@@ -600,7 +604,17 @@ Do NOT chain list then view for every item. Use search/filters to narrow results
 			],
 			parameters: Type.Object({
 				action: StringEnum(
-					["create", "list", "view", "diff", "merge", "review", "close", "checkout"] as const,
+					[
+						"create",
+						"list",
+						"view",
+						"diff",
+						"merge",
+						"review",
+						"close",
+						"checkout",
+						"checks",
+					] as const,
 					{ description: "PR action to perform" },
 				),
 				repo: Type.String({ description: "Repository in owner/name format" }),
@@ -647,6 +661,8 @@ Do NOT chain list then view for every item. Use search/filters to narrow results
 				comment_text: Type.Optional(Type.String({ description: "Comment for close" })),
 				branch: Type.Optional(Type.String({ description: "Checkout branch name" })),
 				limit: Type.Optional(Type.Number({ description: "Max results for list" })),
+				watch: Type.Optional(Type.Boolean({ description: "Watch checks until completion" })),
+				required: Type.Optional(Type.Boolean({ description: "Only consider required checks" })),
 				detail: Type.Optional(
 					StringEnum(["summary", "full"] as const, {
 						description:
@@ -760,6 +776,19 @@ Do NOT chain list then view for every item. Use search/filters to narrow results
 						);
 						break;
 
+					case "checks":
+						if (!params.number) throw new Error("number is required for checks");
+						result = await tools.checks(
+							{
+								repo: params.repo,
+								number: params.number,
+								watch: params.watch,
+								required: params.required,
+							},
+							{ signal },
+						);
+						break;
+
 					default:
 						throw new Error(`Unknown action: ${params.action}`);
 				}
@@ -767,6 +796,7 @@ Do NOT chain list then view for every item. Use search/filters to narrow results
 				const summaryFormatters: Record<string, (data: unknown) => string> = {
 					list: formatPRList,
 					view: formatPRView,
+					checks: formatChecksList,
 				};
 
 				return {
@@ -792,13 +822,14 @@ Do NOT chain list then view for every item. Use search/filters to narrow results
 		defineTool({
 			name: "tff-github_workflow",
 			label: "GitHub Workflow",
-			description: `Manage GitHub Actions workflows. Actions: list, view, run, logs, disable, enable.
+			description: `Manage GitHub Actions workflows. Actions: list, view, run, logs, disable, enable, runs.
 
 Common patterns:
 - List workflows: action "list" with repo
 - View workflow YAML: action "view" with workflow name or filename
 - Trigger a run: action "run" with workflow name and optional branch/inputs
 - Get run logs: action "logs" with run_id (get run_id from GitHub or PR checks)
+- List runs: action "runs" with repo and optional filters (workflow, branch, status)
 
 Output: returns compact summaries by default for list. view and logs return raw text.
 Workflow can be referenced by name, numeric ID, or filename (e.g., "ci.yml").`,
@@ -808,7 +839,7 @@ Workflow can be referenced by name, numeric ID, or filename (e.g., "ci.yml").`,
 				"tff-github_workflow: workflow param accepts name, numeric ID, or filename (e.g., 'ci.yml'). run_id is required for logs",
 			],
 			parameters: Type.Object({
-				action: StringEnum(["list", "view", "run", "logs", "disable", "enable"] as const, {
+				action: StringEnum(["list", "view", "run", "logs", "disable", "enable", "runs"] as const, {
 					description: "Workflow action to perform",
 				}),
 				repo: Type.String({ description: "Repository in owner/name format" }),
@@ -827,6 +858,9 @@ Workflow can be referenced by name, numeric ID, or filename (e.g., "ci.yml").`,
 						description:
 							"Workflow run ID. Required for logs. Get this from GitHub UI or PR status checks.",
 					}),
+				),
+				status: Type.Optional(
+					Type.String({ description: "Filter runs by status (e.g., 'failure', 'success')" }),
 				),
 				limit: Type.Optional(Type.Number({ description: "Max results for list" })),
 				detail: Type.Optional(
@@ -887,12 +921,26 @@ Workflow can be referenced by name, numeric ID, or filename (e.g., "ci.yml").`,
 						);
 						break;
 
+					case "runs":
+						result = await tools.runs(
+							{
+								repo: params.repo,
+								workflow: params.workflow,
+								branch: params.branch,
+								status: params.status,
+								limit: params.limit,
+							},
+							{ signal },
+						);
+						break;
+
 					default:
 						throw new Error(`Unknown action: ${params.action}`);
 				}
 
 				const summaryFormatters: Record<string, (data: unknown) => string> = {
 					list: formatWorkflowList,
+					runs: formatRunsList,
 				};
 
 				return {

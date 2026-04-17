@@ -117,6 +117,7 @@ describe("gh-extension", () => {
 				"review",
 				"close",
 				"checkout",
+				"checks",
 			]) {
 				expect(tool?.parameters.properties.action.enum).toContain(action);
 			}
@@ -128,7 +129,7 @@ describe("gh-extension", () => {
 			ghExtension(mockPi);
 			const tool = registeredTools.get("tff-github_workflow");
 			expect(tool?.name).toBe("tff-github_workflow");
-			for (const action of ["list", "view", "run", "logs", "disable", "enable"]) {
+			for (const action of ["list", "view", "run", "logs", "disable", "enable", "runs"]) {
 				expect(tool?.parameters.properties.action.enum).toContain(action);
 			}
 		});
@@ -558,6 +559,100 @@ describe("gh-extension", () => {
 					process.env.GH_CLI_PATH = original;
 				}
 			}
+		});
+
+		it("calls checks action on github_pr tool", async () => {
+			mockExec.mockImplementation(async (_cmd, args) => {
+				if (args[0] === "--version") return { code: 0, stdout: "", stderr: "" };
+				if (args[0] === "auth") return { code: 0, stdout: "", stderr: "" };
+				if (args[0] === "pr" && args[1] === "checks") {
+					return {
+						code: 0,
+						stdout: JSON.stringify([{ name: "ci", state: "SUCCESS" }]),
+						stderr: "",
+					};
+				}
+				return { code: 0, stdout: "[]", stderr: "" };
+			});
+
+			ghExtension(mockPi);
+			const sessionStart = eventHandlers.get("session_start") as SessionStartHandler;
+			await sessionStart({}, { hasUI: false, ui: { notify: vi.fn() } });
+
+			const tool = registeredTools.get("tff-github_pr");
+			if (!tool) throw new Error("github_pr tool not registered");
+			const result = await tool.execute(
+				"call-checks",
+				{
+					action: "checks",
+					repo: "owner/repo",
+					number: 42,
+				},
+				undefined,
+				undefined,
+				{},
+			);
+
+			expect(result.details).toMatchObject({ action: "checks" });
+			const checksCall = mockExec.mock.calls.find(
+				([, args]) => Array.isArray(args) && args[0] === "pr" && args[1] === "checks",
+			);
+			expect(checksCall).toBeDefined();
+			const args = checksCall?.[1] as string[];
+			expect(args).toContain("42");
+			expect(args).toContain("--repo");
+			expect(args).toContain("owner/repo");
+		});
+
+		it("calls runs action on github_workflow tool with filters", async () => {
+			mockExec.mockImplementation(async (_cmd, args) => {
+				if (args[0] === "--version") return { code: 0, stdout: "", stderr: "" };
+				if (args[0] === "auth") return { code: 0, stdout: "", stderr: "" };
+				if (args[0] === "run" && args[1] === "list") {
+					return {
+						code: 0,
+						stdout: JSON.stringify([{ databaseId: 123, status: "completed" }]),
+						stderr: "",
+					};
+				}
+				return { code: 0, stdout: "[]", stderr: "" };
+			});
+
+			ghExtension(mockPi);
+			const sessionStart = eventHandlers.get("session_start") as SessionStartHandler;
+			await sessionStart({}, { hasUI: false, ui: { notify: vi.fn() } });
+
+			const tool = registeredTools.get("tff-github_workflow");
+			if (!tool) throw new Error("github_workflow tool not registered");
+			const result = await tool.execute(
+				"call-runs",
+				{
+					action: "runs",
+					repo: "owner/repo",
+					workflow: "ci.yml",
+					branch: "main",
+					status: "failure",
+					limit: 10,
+				},
+				undefined,
+				undefined,
+				{},
+			);
+
+			expect(result.details).toMatchObject({ action: "runs" });
+			const runsCall = mockExec.mock.calls.find(
+				([, args]) => Array.isArray(args) && args[0] === "run" && args[1] === "list",
+			);
+			expect(runsCall).toBeDefined();
+			const args = runsCall?.[1] as string[];
+			expect(args).toContain("--workflow");
+			expect(args).toContain("ci.yml");
+			expect(args).toContain("--branch");
+			expect(args).toContain("main");
+			expect(args).toContain("--status");
+			expect(args).toContain("failure");
+			expect(args).toContain("--limit");
+			expect(args).toContain("10");
 		});
 	});
 });

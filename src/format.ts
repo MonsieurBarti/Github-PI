@@ -94,6 +94,27 @@ interface WorkflowListItem {
 	path?: string;
 }
 
+// -- Check shapes --
+
+interface CheckItem {
+	name?: string;
+	state?: string;
+	workflow?: string;
+	bucket?: string;
+}
+
+// -- Run shapes --
+
+interface RunListItem {
+	databaseId?: number | string;
+	name?: string;
+	workflowName?: string;
+	status?: string;
+	conclusion?: string | null;
+	headBranch?: string;
+	startedAt?: string | null;
+}
+
 // -- Helpers --
 
 function formatDate(iso: string | null | undefined): string {
@@ -291,6 +312,46 @@ export function formatWorkflowList(data: unknown): string {
 		const file = wf.path ? wf.path.split("/").pop() : "";
 		const id = wf.id ?? "";
 		return `${name}  ${file}  (id: ${id})`;
+	});
+
+	return lines.join("\n");
+}
+
+// -- Check formatters --
+
+export function formatChecksList(data: unknown): string {
+	if (!Array.isArray(data) || data.length === 0) {
+		return "No checks found.";
+	}
+
+	const items = data as CheckItem[];
+	const lines = items.map((check) => {
+		const name = check.name ?? "";
+		const state = check.state ?? "";
+		const workflow = check.workflow ?? "";
+		return `${name}  ${state}  ${workflow}`;
+	});
+
+	return lines.join("\n");
+}
+
+// -- Run formatters --
+
+export function formatRunsList(data: unknown): string {
+	if (!Array.isArray(data) || data.length === 0) {
+		return "No workflow runs found.";
+	}
+
+	const items = data as RunListItem[];
+	const lines = items.map((run) => {
+		const id = run.databaseId ?? "";
+		const name = run.name ?? "";
+		const workflow = run.workflowName ?? "";
+		const status = run.status ?? "";
+		const conclusion = run.conclusion ?? "";
+		const branch = run.headBranch ?? "";
+		const date = formatDate(run.startedAt);
+		return `${id}  ${name}  ${workflow}  ${status}/${conclusion}  ${branch}  ${date}`;
 	});
 
 	return lines.join("\n");
