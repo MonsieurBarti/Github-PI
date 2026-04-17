@@ -654,5 +654,106 @@ describe("gh-extension", () => {
 			expect(args).toContain("--limit");
 			expect(args).toContain("10");
 		});
+
+		it("supports debug workflow: checks -> runs -> logs chain", async () => {
+			// Simulate the full debug workflow:
+			// 1. checks returns failing checks with workflow name
+			// 2. runs with workflow filter gets run ID
+			// 3. logs with run ID gets logs
+			mockExec.mockImplementation(async (_cmd, args) => {
+				if (args[0] === "--version") return { code: 0, stdout: "", stderr: "" };
+				if (args[0] === "auth") return { code: 0, stdout: "", stderr: "" };
+				// PR checks
+				if (args[0] === "pr" && args[1] === "checks") {
+					return {
+						code: 0,
+						stdout: JSON.stringify([
+							{ name: "ci", state: "FAILURE", workflow: "CI Pipeline" },
+							{ name: "lint", state: "SUCCESS", workflow: "CI Pipeline" },
+						]),
+						stderr: "",
+					};
+				}
+				// Workflow runs
+				if (args[0] === "run" && args[1] === "list") {
+					return {
+						code: 0,
+						stdout: JSON.stringify([
+							{
+								databaseId: 123456,
+								name: "CI Pipeline",
+								status: "completed",
+								conclusion: "failure",
+								headBranch: "feature",
+							},
+						]),
+						stderr: "",
+					};
+				}
+				// Run logs
+				if (args[0] === "run" && args[1] === "view" && args.includes("--log")) {
+					return {
+						code: 0,
+						stdout: "2024-01-01T00:00:00.000Z error: build failed",
+						stderr: "",
+					};
+				}
+				return { code: 0, stdout: "[]", stderr: "" };
+			});
+
+			ghExtension(mockPi);
+			const sessionStart = eventHandlers.get("session_start") as SessionStartHandler;
+			await sessionStart({}, { hasUI: false, ui: { notify: vi.fn() } });
+
+			const prTool = registeredTools.get("tff-github_pr");
+			const workflowTool = registeredTools.get("tff-github_workflow");
+			if (!prTool || !workflowTool) throw new Error("tools not registered");
+
+			// Step 1: Get PR checks
+			const checksResult = await prTool.execute(
+				"checks-step",
+				{ action: "checks", repo: "owner/repo", number: 42 },
+				undefined,
+				undefined,
+				{},
+			);
+			expect(checksResult.details).toMatchObject({ action: "checks" });
+
+			// Step 2: Get workflow runs (using workflow name from checks)
+			const runsResult = await workflowTool.execute(
+				"runs-step",
+				{ action: "runs", repo: "owner/repo", workflow: "CI Pipeline", branch: "feature" },
+				undefined,
+				undefined,
+				{},
+			);
+			expect(runsResult.details).toMatchObject({ action: "runs" });
+
+			// Step 3: Get run logs (using run ID from runs)
+			const logsResult = await workflowTool.execute(
+				"logs-step",
+				{ action: "logs", repo: "owner/repo", run_id: "123456" },
+				undefined,
+				undefined,
+				{},
+			);
+			expect(logsResult.details).toMatchObject({ action: "logs" });
+			expect(logsResult.content[0].text).toContain("build failed");
+
+			// Verify all three gh calls were made in sequence
+			const checksCall = mockExec.mock.calls.find(
+				([, args]) => Array.isArray(args) && args[0] === "pr" && args[1] === "checks",
+			);
+			const runsCall = mockExec.mock.calls.find(
+				([, args]) => Array.isArray(args) && args[0] === "run" && args[1] === "list",
+			);
+			const logsCall = mockExec.mock.calls.find(
+				([, args]) =>
+					Array.isArray(args) && args[0] === "run" && args[1] === "view" && args.includes("--log"),
+			);
+			expect(checksCall).toBeDefined();
+			expect(runsCall).toBeDefined();
+			expect(logsCall).toBeDefined();
+		});
 	});
 });
