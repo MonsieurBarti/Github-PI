@@ -121,6 +121,67 @@ describe("gh-extension", () => {
 				expect(tool?.parameters.properties.action.enum).toContain(action);
 			}
 		});
+
+		it("contains checks in action enum", () => {
+			ghExtension(mockPi);
+			const tool = registeredTools.get("tff-github_pr");
+			expect(tool?.parameters.properties.action.enum).toContain("checks");
+		});
+
+		it("routes checks action and forwards number to gh pr checks", async () => {
+			mockExec.mockImplementation(async (_cmd, args) => {
+				if (args[0] === "--version") return { code: 0, stdout: "", stderr: "" };
+				if (args[0] === "auth") return { code: 0, stdout: "", stderr: "" };
+				return { code: 0, stdout: "✓ all checks passed", stderr: "" };
+			});
+
+			ghExtension(mockPi);
+			const sessionStart = eventHandlers.get("session_start") as SessionStartHandler;
+			await sessionStart({}, { hasUI: false, ui: { notify: vi.fn() } });
+
+			const tool = registeredTools.get("tff-github_pr");
+			if (!tool) throw new Error("github_pr tool not registered");
+			await tool.execute(
+				"call-pr-checks",
+				{ action: "checks", repo: "owner/repo", number: 42 },
+				undefined,
+				undefined,
+				{},
+			);
+
+			const checksCall = mockExec.mock.calls.find(
+				([, args]) => Array.isArray(args) && args[0] === "pr" && args[1] === "checks",
+			);
+			expect(checksCall).toBeDefined();
+			const args = checksCall?.[1] as string[];
+			expect(args).toContain("42");
+			expect(args).not.toContain("--watch");
+			expect(args).not.toContain("--required");
+		});
+
+		it("throws when checks called without number", async () => {
+			mockExec.mockImplementation(async (_cmd, args) => {
+				if (args[0] === "--version") return { code: 0, stdout: "", stderr: "" };
+				if (args[0] === "auth") return { code: 0, stdout: "", stderr: "" };
+				return { code: 0, stdout: "", stderr: "" };
+			});
+
+			ghExtension(mockPi);
+			const sessionStart = eventHandlers.get("session_start") as SessionStartHandler;
+			await sessionStart({}, { hasUI: false, ui: { notify: vi.fn() } });
+
+			const tool = registeredTools.get("tff-github_pr");
+			if (!tool) throw new Error("github_pr tool not registered");
+			await expect(
+				tool.execute(
+					"call-pr-checks",
+					{ action: "checks", repo: "owner/repo" },
+					undefined,
+					undefined,
+					{},
+				),
+			).rejects.toThrow("number is required for checks");
+		});
 	});
 
 	describe("github_workflow tool", () => {

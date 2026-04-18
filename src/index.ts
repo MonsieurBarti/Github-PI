@@ -581,7 +581,7 @@ Issue numbers are required for view, close, reopen, comment, edit.`,
 		defineTool({
 			name: "tff-github_pr",
 			label: "GitHub Pull Request",
-			description: `Manage GitHub pull requests. Actions: create, list, view, diff, merge, review, close, checkout.
+			description: `Manage GitHub pull requests. Actions: create, list, view, diff, merge, review, close, checkout, checks.
 
 Common patterns:
 - Find merged PRs: action "list" with state "merged"
@@ -600,7 +600,17 @@ Do NOT chain list then view for every item. Use search/filters to narrow results
 			],
 			parameters: Type.Object({
 				action: StringEnum(
-					["create", "list", "view", "diff", "merge", "review", "close", "checkout"] as const,
+					[
+						"create",
+						"list",
+						"view",
+						"diff",
+						"merge",
+						"review",
+						"close",
+						"checkout",
+						"checks",
+					] as const,
 					{ description: "PR action to perform" },
 				),
 				repo: Type.String({ description: "Repository in owner/name format" }),
@@ -646,6 +656,13 @@ Do NOT chain list then view for every item. Use search/filters to narrow results
 				),
 				comment_text: Type.Optional(Type.String({ description: "Comment for close" })),
 				branch: Type.Optional(Type.String({ description: "Checkout branch name" })),
+				watch: Type.Optional(
+					Type.Boolean({
+						default: false,
+						description: "Wait for checks to complete (watch mode, 600s timeout)",
+					}),
+				),
+				required: Type.Optional(Type.Boolean({ description: "Only show required checks" })),
 				limit: Type.Optional(Type.Number({ description: "Max results for list" })),
 				detail: Type.Optional(
 					StringEnum(["summary", "full"] as const, {
@@ -755,6 +772,19 @@ Do NOT chain list then view for every item. Use search/filters to narrow results
 								repo: params.repo,
 								number: params.number,
 								branch: params.branch,
+							},
+							{ signal },
+						);
+						break;
+
+					case "checks":
+						if (!params.number) throw new Error("number is required for checks");
+						result = await tools.checks(
+							{
+								repo: params.repo,
+								number: params.number,
+								watch: params.watch ?? false,
+								required: params.required,
 							},
 							{ signal },
 						);
