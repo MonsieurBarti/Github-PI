@@ -595,7 +595,7 @@ Do NOT chain list then view for every item. Use search/filters to narrow results
 			promptSnippet: "Work with GitHub pull requests",
 			promptGuidelines: [
 				"tff-github_pr: use 'state' param to filter PRs (open/closed/merged/all), use 'search' for keyword queries",
-				"tff-github_pr: 'list', 'view', 'diff' are read-only (parallel-safe). 'create', 'merge', 'review', 'close', 'checkout' have side effects — run serially",
+				"tff-github_pr: 'list', 'view', 'diff', 'checks' are read-only (parallel-safe). 'create', 'merge', 'review', 'close', 'checkout' have side effects — run serially",
 				"tff-github_pr: prefer a single 'list' with search/filters over multiple calls. Do not view each PR individually unless you need full detail",
 			],
 			parameters: Type.Object({
