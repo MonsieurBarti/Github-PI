@@ -465,4 +465,37 @@ describe("pr-tools", () => {
 			await expect(tools.checks({ repo: "owner/repo", number: 5 })).rejects.toThrow(GHAuthError);
 		});
 	});
+
+	describe("listReviewComments", () => {
+		it("calls gh api with the correct endpoint", async () => {
+			const tools = createPRTools(mockClient);
+			mockExec.mockResolvedValue({ code: 0, stdout: "[]", stderr: "" });
+
+			await tools.listReviewComments({ repo: "owner/repo", number: 42 });
+
+			expect(mockExec).toHaveBeenCalledWith(
+				["api", "/repos/owner/repo/pulls/42/comments"],
+				undefined,
+			);
+		});
+
+		it("parses JSON stdout into the data field", async () => {
+			const tools = createPRTools(mockClient);
+			const comments = [{ path: "src/foo.ts", line: 1, user: { login: "u" }, body: "hi" }];
+			mockExec.mockResolvedValue({ code: 0, stdout: JSON.stringify(comments), stderr: "" });
+
+			const result = await tools.listReviewComments({ repo: "owner/repo", number: 42 });
+
+			expect(result.data).toEqual(comments);
+		});
+
+		it("handles empty comments array", async () => {
+			const tools = createPRTools(mockClient);
+			mockExec.mockResolvedValue({ code: 0, stdout: "[]", stderr: "" });
+
+			const result = await tools.listReviewComments({ repo: "owner/repo", number: 1 });
+
+			expect(result.data).toEqual([]);
+		});
+	});
 });

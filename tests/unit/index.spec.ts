@@ -117,6 +117,7 @@ describe("gh-extension", () => {
 				"review",
 				"close",
 				"checkout",
+				"list_review_comments",
 			]) {
 				expect(tool?.parameters.properties.action.enum).toContain(action);
 			}
@@ -181,6 +182,36 @@ describe("gh-extension", () => {
 					{},
 				),
 			).rejects.toThrow("number is required for checks");
+		});
+
+		it("routes list_review_comments action and calls gh api endpoint", async () => {
+			const comments = [{ path: "src/foo.ts", line: 1, user: { login: "u" }, body: "hi" }];
+			mockExec.mockImplementation(async (_cmd, args) => {
+				if (args[0] === "--version") return { code: 0, stdout: "", stderr: "" };
+				if (args[0] === "auth") return { code: 0, stdout: "", stderr: "" };
+				return { code: 0, stdout: JSON.stringify(comments), stderr: "" };
+			});
+
+			ghExtension(mockPi);
+			const sessionStart = eventHandlers.get("session_start") as SessionStartHandler;
+			await sessionStart({}, { hasUI: false, ui: { notify: vi.fn() } });
+
+			const tool = registeredTools.get("tff-github_pr");
+			if (!tool) throw new Error("github_pr tool not registered");
+			const result = await tool.execute(
+				"call-review-comments",
+				{ action: "list_review_comments", repo: "owner/repo", number: 1 },
+				undefined,
+				undefined,
+				undefined,
+			);
+
+			expect(mockExec).toHaveBeenCalledWith(
+				"gh",
+				["api", "/repos/owner/repo/pulls/1/comments"],
+				expect.any(Object),
+			);
+			expect(result.content[0].text).toContain("src/foo.ts:1");
 		});
 	});
 
