@@ -13,6 +13,7 @@ import {
 	formatIssueList,
 	formatIssueView,
 	formatPRList,
+	formatPRReviewComments,
 	formatPRView,
 	formatRepoList,
 	formatRepoView,
@@ -42,6 +43,7 @@ export type {
 	CreatePRParams,
 	DiffPRParams,
 	ListPRsParams,
+	ListReviewCommentsParams,
 	MergePRParams,
 	ReviewPRParams,
 	ViewPRParams,
@@ -581,7 +583,7 @@ Issue numbers are required for view, close, reopen, comment, edit.`,
 		defineTool({
 			name: "tff-github_pr",
 			label: "GitHub Pull Request",
-			description: `Manage GitHub pull requests. Actions: create, list, view, diff, merge, review, close, checkout, checks.
+			description: `Manage GitHub pull requests. Actions: create, list, view, diff, merge, review, close, checkout, checks, list_review_comments.
 
 Common patterns:
 - Find merged PRs: action "list" with state "merged"
@@ -595,7 +597,7 @@ Do NOT chain list then view for every item. Use search/filters to narrow results
 			promptSnippet: "Work with GitHub pull requests",
 			promptGuidelines: [
 				"tff-github_pr: use 'state' param to filter PRs (open/closed/merged/all), use 'search' for keyword queries",
-				"tff-github_pr: 'list', 'view', 'diff', 'checks' are read-only (parallel-safe). 'create', 'merge', 'review', 'close', 'checkout' have side effects — run serially",
+				"tff-github_pr: 'list', 'view', 'diff', 'checks', 'list_review_comments' are read-only (parallel-safe). 'create', 'merge', 'review', 'close', 'checkout' have side effects — run serially",
 				"tff-github_pr: prefer a single 'list' with search/filters over multiple calls. Do not view each PR individually unless you need full detail",
 			],
 			parameters: Type.Object({
@@ -610,6 +612,7 @@ Do NOT chain list then view for every item. Use search/filters to narrow results
 						"close",
 						"checkout",
 						"checks",
+						"list_review_comments",
 					] as const,
 					{ description: "PR action to perform" },
 				),
@@ -790,6 +793,14 @@ Do NOT chain list then view for every item. Use search/filters to narrow results
 						);
 						break;
 
+					case "list_review_comments":
+						if (!params.number) throw new Error("number is required for list_review_comments");
+						result = await tools.listReviewComments(
+							{ repo: params.repo, number: params.number },
+							{ signal },
+						);
+						break;
+
 					default:
 						throw new Error(`Unknown action: ${params.action}`);
 				}
@@ -797,6 +808,7 @@ Do NOT chain list then view for every item. Use search/filters to narrow results
 				const summaryFormatters: Record<string, (data: unknown) => string> = {
 					list: formatPRList,
 					view: formatPRView,
+					list_review_comments: formatPRReviewComments,
 				};
 
 				return {
