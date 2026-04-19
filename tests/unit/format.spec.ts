@@ -3,6 +3,7 @@ import {
 	formatIssueList,
 	formatIssueView,
 	formatPRList,
+	formatPRReviewComments,
 	formatPRView,
 	formatRepoList,
 	formatRepoView,
@@ -331,6 +332,49 @@ describe("format", () => {
 			expect(result).toContain("Orphan PR");
 			expect(result).toContain("unknown");
 			expect(result).not.toContain("null");
+		});
+	});
+
+	describe("formatPRReviewComments", () => {
+		it("returns 'No review comments.' for empty array", () => {
+			expect(formatPRReviewComments([])).toBe("No review comments.");
+		});
+
+		it("formats a comment with path, line, author, and body", () => {
+			const data = [
+				{ path: "src/foo.ts", line: 42, user: { login: "reviewer" }, body: "Consider X" },
+			];
+			expect(formatPRReviewComments(data)).toBe("src/foo.ts:42  reviewer  Consider X");
+		});
+
+		it("uses '(general)' placeholder for null path and line", () => {
+			const data = [
+				{ path: null, line: null, user: { login: "reviewer" }, body: "General comment" },
+			];
+			expect(formatPRReviewComments(data)).toBe("(general)  reviewer  General comment");
+		});
+
+		it("truncates body longer than 500 chars", () => {
+			const longBody = "A".repeat(600);
+			const data = [{ path: "src/foo.ts", line: 1, user: { login: "u" }, body: longBody }];
+			const result = formatPRReviewComments(data);
+			expect(result).toContain("A".repeat(500));
+			expect(result).toContain("...");
+		});
+
+		it("handles missing user login gracefully", () => {
+			const data = [{ path: "src/foo.ts", line: 1, user: null, body: "comment" }];
+			expect(formatPRReviewComments(data)).toContain("unknown");
+		});
+
+		it("formats multiple comments as separate lines", () => {
+			const data = [
+				{ path: "a.ts", line: 1, user: { login: "u1" }, body: "first" },
+				{ path: "b.ts", line: 2, user: { login: "u2" }, body: "second" },
+			];
+			const result = formatPRReviewComments(data);
+			expect(result).toContain("a.ts:1");
+			expect(result).toContain("b.ts:2");
 		});
 	});
 });
