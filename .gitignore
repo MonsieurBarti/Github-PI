@@ -5,3 +5,5 @@ dist
 .worktrees/
 docs/plans
 docs/superpowers
+/.tff-cc
+build/

@@ -77,6 +77,11 @@ export interface ChecksParams {
 	required?: boolean;
 }
 
+export interface ListReviewCommentsParams {
+	repo: string;
+	number: number;
+}
+
 export function createPRTools(client: GHClient) {
 	return {
 		async create(params: CreatePRParams, options?: ExecOptions) {
@@ -246,6 +251,23 @@ export function createPRTools(client: GHClient) {
 				}
 				throw err;
 			}
+		},
+
+		async listReviewComments(
+			params: ListReviewCommentsParams,
+			options?: ExecOptions,
+		): Promise<ExecResult> {
+			const [owner, name] = params.repo.split("/");
+			// GitHub API defaults to 30 items/page; pagination is deferred (non-goal for this slice).
+			const args = ["api", `/repos/${owner}/${name}/pulls/${params.number}/comments`];
+			const result = await client.exec(args, options);
+			let data: unknown;
+			try {
+				data = JSON.parse(result.stdout);
+			} catch {
+				// non-JSON response; data stays undefined
+			}
+			return { ...result, data };
 		},
 	};
 }
