@@ -101,6 +101,45 @@ describe("gh-extension", () => {
 				expect(tool?.parameters.properties.action.enum).toContain(action);
 			}
 		});
+
+		it("preserves the full issue body when viewing an issue", async () => {
+			const longBody = "B".repeat(600);
+			const issue = {
+				number: 42,
+				title: "Long issue",
+				body: longBody,
+				state: "OPEN",
+				author: { login: "octocat" },
+				createdAt: "2025-04-10T12:00:00Z",
+				updatedAt: "2025-04-11T12:00:00Z",
+				comments: [],
+				labels: [],
+				assignees: [],
+			};
+
+			mockExec.mockImplementation(async (_cmd, args) => {
+				if (args[0] === "--version") return { code: 0, stdout: "", stderr: "" };
+				if (args[0] === "auth") return { code: 0, stdout: "", stderr: "" };
+				return { code: 0, stdout: JSON.stringify(issue), stderr: "" };
+			});
+
+			ghExtension(mockPi);
+			const sessionStart = eventHandlers.get("session_start") as SessionStartHandler;
+			await sessionStart({}, { hasUI: false, ui: { notify: vi.fn() } });
+
+			const tool = registeredTools.get("tff-github_issue");
+			if (!tool) throw new Error("github_issue tool not registered");
+			const result = await tool.execute(
+				"call-issue-view",
+				{ action: "view", repo: "owner/repo", number: 42 },
+				undefined,
+				undefined,
+				{},
+			);
+
+			expect(result.content[0].text).toContain(longBody);
+			expect(result.content[0].text).not.toContain(`${"B".repeat(500)}...`);
+		});
 	});
 
 	describe("github_pr tool", () => {

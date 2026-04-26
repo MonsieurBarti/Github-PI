@@ -187,6 +187,26 @@ describe("format", () => {
 			expect(result).toContain("Issue #10: Simple issue");
 			expect(result).toContain("CLOSED");
 		});
+
+		it("does not truncate long issue bodies", () => {
+			const longBody = "A".repeat(600);
+			const data = {
+				number: 16,
+				title: "Long body",
+				state: "OPEN",
+				author: { login: "user123" },
+				labels: [],
+				assignees: [],
+				createdAt: "2025-04-10T12:00:00Z",
+				body: longBody,
+				comments: [],
+			};
+
+			const result = formatIssueView(data);
+
+			expect(result).toContain(longBody);
+			expect(result).not.toContain(`${"A".repeat(200)}...`);
+		});
 	});
 
 	describe("formatRepoList", () => {

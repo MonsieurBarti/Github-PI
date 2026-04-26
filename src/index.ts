@@ -188,14 +188,18 @@ export default function ghExtension(pi: ExtensionAPI): void {
 	 */
 	function formatOutput(
 		result: ExecResult,
-		options?: { detail?: "summary" | "full"; summaryFormatter?: (data: unknown) => string },
+		options?: {
+			detail?: "summary" | "full";
+			summaryFormatter?: (data: unknown) => string;
+			preserveKeys?: string[];
+		},
 	): string {
 		if (result.code === 2) {
 			const cancelDetail = result.stderr.trim() || result.stdout.trim();
 			return cancelDetail ? `gh command cancelled: ${cancelDetail}` : "gh command cancelled";
 		}
 
-		const cleanedData = formatResponse(result.data);
+		const cleanedData = formatResponse(result.data, { preserveKeys: options?.preserveKeys });
 
 		// Summary mode: use the formatter if we have parsed data and a formatter
 		if (options?.detail !== "full" && options?.summaryFormatter && cleanedData != null) {
@@ -570,6 +574,7 @@ Issue numbers are required for view, close, reopen, comment, edit.`,
 							text: formatOutput(result, {
 								detail: params.detail,
 								summaryFormatter: summaryFormatters[params.action],
+								preserveKeys: params.action === "view" ? ["body"] : undefined,
 							}),
 						},
 					],

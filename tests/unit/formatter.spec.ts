@@ -51,6 +51,13 @@ describe("formatResponse", () => {
 			const result = formatResponse(input) as { body: string };
 			expect(result.body).toBe(shortBody);
 		});
+
+		it("preserves configured keys without truncating them", () => {
+			const longBody = "E".repeat(600);
+			const input = { body: longBody };
+			const result = formatResponse(input, { preserveKeys: ["body"] }) as { body: string };
+			expect(result.body).toBe(longBody);
+		});
 	});
 
 	describe("fields allowlist", () => {

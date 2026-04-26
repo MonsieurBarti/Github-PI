@@ -248,9 +248,9 @@ export function formatIssueView(data: unknown): string {
 	if (metaParts) lines.push(metaParts);
 	lines.push(created);
 
-	const bodyPreview = truncateBody(issue.body);
-	if (bodyPreview) {
-		lines.push("", bodyPreview);
+	const body = issue.body?.trim();
+	if (body) {
+		lines.push("", body);
 	}
 
 	return lines.join("\n");
